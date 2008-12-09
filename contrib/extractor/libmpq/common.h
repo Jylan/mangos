@@ -31,6 +31,10 @@
 #define LIBMPQ_CONF_EOPEN_DIR		-1			/* error on open directory */
 #define LIBMPQ_CONF_EVALUE_NOT_FOUND	-2			/* value for the option was not found */
 
+#ifndef lseek64
+#define lseek64 lseek
+#endif
+
 #if defined( __GNUC__ )
 	#include <sys/types.h>
 	#include <unistd.h>

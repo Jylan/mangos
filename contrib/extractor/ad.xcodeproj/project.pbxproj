@@ -1,0 +1,404 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		7DD3A17C0E980CE50023CB74 /* huffman.h in Headers */ = {isa = PBXBuildFile; fileRef = 7DD3A16E0E980CE50023CB74 /* huffman.h */; };
+		7DD3A17D0E980CE50023CB74 /* explode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A16F0E980CE50023CB74 /* explode.cpp */; };
+		7DD3A17E0E980CE50023CB74 /* extract.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A1700E980CE50023CB74 /* extract.cpp */; };
+		7DD3A17F0E980CE50023CB74 /* wave.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A1710E980CE50023CB74 /* wave.cpp */; };
+		7DD3A1800E980CE50023CB74 /* parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A1720E980CE50023CB74 /* parser.cpp */; };
+		7DD3A1810E980CE50023CB74 /* mpq.h in Headers */ = {isa = PBXBuildFile; fileRef = 7DD3A1730E980CE50023CB74 /* mpq.h */; };
+		7DD3A1820E980CE50023CB74 /* mpq.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A1740E980CE50023CB74 /* mpq.cpp */; };
+		7DD3A1830E980CE50023CB74 /* zlib.h in Headers */ = {isa = PBXBuildFile; fileRef = 7DD3A1750E980CE50023CB74 /* zlib.h */; };
+		7DD3A1840E980CE50023CB74 /* zconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 7DD3A1760E980CE50023CB74 /* zconf.h */; };
+		7DD3A1850E980CE50023CB74 /* wave.h in Headers */ = {isa = PBXBuildFile; fileRef = 7DD3A1770E980CE50023CB74 /* wave.h */; };
+		7DD3A1860E980CE50023CB74 /* common.h in Headers */ = {isa = PBXBuildFile; fileRef = 7DD3A1780E980CE50023CB74 /* common.h */; };
+		7DD3A1870E980CE50023CB74 /* explode.h in Headers */ = {isa = PBXBuildFile; fileRef = 7DD3A1790E980CE50023CB74 /* explode.h */; };
+		7DD3A1880E980CE50023CB74 /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A17A0E980CE50023CB74 /* common.cpp */; };
+		7DD3A1890E980CE50023CB74 /* huffman.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A17B0E980CE50023CB74 /* huffman.cpp */; };
+		7DD3A1910E980D2D0023CB74 /* adt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A18B0E980D2D0023CB74 /* adt.cpp */; };
+		7DD3A1920E980D2D0023CB74 /* System.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A18C0E980D2D0023CB74 /* System.cpp */; };
+		7DD3A1930E980D2D0023CB74 /* mpq_libmpq.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A18D0E980D2D0023CB74 /* mpq_libmpq.cpp */; };
+		7DD3A1940E980D2D0023CB74 /* dbcfile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A1900E980D2D0023CB74 /* dbcfile.cpp */; };
+		7DD3A1A20E9811A00023CB74 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 7DD3A1A10E9811A00023CB74 /* libz.dylib */; };
+		7DD3A1A60E9811FA0023CB74 /* libmpq.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7DA32C690E980BC50060F599 /* libmpq.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		7DD3A19D0E9810B70023CB74 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7DA32C680E980BC50060F599;
+			remoteInfo = libmpq;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8DD76F690486A84900D96B5E /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 8;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		7DA32C690E980BC50060F599 /* libmpq.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libmpq.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		7DD3A16E0E980CE50023CB74 /* huffman.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = huffman.h; path = libmpq/huffman.h; sourceTree = "<group>"; };
+		7DD3A16F0E980CE50023CB74 /* explode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = explode.cpp; path = libmpq/explode.cpp; sourceTree = "<group>"; };
+		7DD3A1700E980CE50023CB74 /* extract.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = extract.cpp; path = libmpq/extract.cpp; sourceTree = "<group>"; };
+		7DD3A1710E980CE50023CB74 /* wave.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = wave.cpp; path = libmpq/wave.cpp; sourceTree = "<group>"; };
+		7DD3A1720E980CE50023CB74 /* parser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = parser.cpp; path = libmpq/parser.cpp; sourceTree = "<group>"; };
+		7DD3A1730E980CE50023CB74 /* mpq.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mpq.h; path = libmpq/mpq.h; sourceTree = "<group>"; };
+		7DD3A1740E980CE50023CB74 /* mpq.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mpq.cpp; path = libmpq/mpq.cpp; sourceTree = "<group>"; };
+		7DD3A1750E980CE50023CB74 /* zlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zlib.h; path = libmpq/zlib.h; sourceTree = "<group>"; };
+		7DD3A1760E980CE50023CB74 /* zconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zconf.h; path = libmpq/zconf.h; sourceTree = "<group>"; };
+		7DD3A1770E980CE50023CB74 /* wave.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wave.h; path = libmpq/wave.h; sourceTree = "<group>"; };
+		7DD3A1780E980CE50023CB74 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = common.h; path = libmpq/common.h; sourceTree = "<group>"; };
+		7DD3A1790E980CE50023CB74 /* explode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = explode.h; path = libmpq/explode.h; sourceTree = "<group>"; };
+		7DD3A17A0E980CE50023CB74 /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = common.cpp; path = libmpq/common.cpp; sourceTree = "<group>"; };
+		7DD3A17B0E980CE50023CB74 /* huffman.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = huffman.cpp; path = libmpq/huffman.cpp; sourceTree = "<group>"; };
+		7DD3A18A0E980D2D0023CB74 /* adt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = adt.h; sourceTree = "<group>"; };
+		7DD3A18B0E980D2D0023CB74 /* adt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = adt.cpp; sourceTree = "<group>"; };
+		7DD3A18C0E980D2D0023CB74 /* System.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = System.cpp; sourceTree = "<group>"; };
+		7DD3A18D0E980D2D0023CB74 /* mpq_libmpq.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mpq_libmpq.cpp; sourceTree = "<group>"; };
+		7DD3A18E0E980D2D0023CB74 /* mpq_libmpq.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mpq_libmpq.h; sourceTree = "<group>"; };
+		7DD3A18F0E980D2D0023CB74 /* dbcfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dbcfile.h; sourceTree = "<group>"; };
+		7DD3A1900E980D2D0023CB74 /* dbcfile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dbcfile.cpp; sourceTree = "<group>"; };
+		7DD3A1A10E9811A00023CB74 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
+		8DD76F6C0486A84900D96B5E /* ad */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ad; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		7DA32C670E980BC50060F599 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DD76F660486A84900D96B5E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7DD3A1A20E9811A00023CB74 /* libz.dylib in Frameworks */,
+				7DD3A1A60E9811FA0023CB74 /* libmpq.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		08FB7794FE84155DC02AAC07 /* mangos_extractor */ = {
+			isa = PBXGroup;
+			children = (
+				08FB7795FE84155DC02AAC07 /* extractor */,
+				7DD3A16D0E980C960023CB74 /* libmpq */,
+				7DD3A19B0E9810470023CB74 /* Libraries */,
+				C6859E8C029090F304C91782 /* Documentation */,
+				1AB674ADFE9D54B511CA2CBB /* Products */,
+			);
+			name = mangos_extractor;
+			sourceTree = "<group>";
+		};
+		08FB7795FE84155DC02AAC07 /* extractor */ = {
+			isa = PBXGroup;
+			children = (
+				7DD3A18A0E980D2D0023CB74 /* adt.h */,
+				7DD3A18B0E980D2D0023CB74 /* adt.cpp */,
+				7DD3A18C0E980D2D0023CB74 /* System.cpp */,
+				7DD3A18D0E980D2D0023CB74 /* mpq_libmpq.cpp */,
+				7DD3A18E0E980D2D0023CB74 /* mpq_libmpq.h */,
+				7DD3A18F0E980D2D0023CB74 /* dbcfile.h */,
+				7DD3A1900E980D2D0023CB74 /* dbcfile.cpp */,
+			);
+			name = extractor;
+			sourceTree = "<group>";
+		};
+		1AB674ADFE9D54B511CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8DD76F6C0486A84900D96B5E /* ad */,
+				7DA32C690E980BC50060F599 /* libmpq.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7DD3A16D0E980C960023CB74 /* libmpq */ = {
+			isa = PBXGroup;
+			children = (
+				7DD3A16E0E980CE50023CB74 /* huffman.h */,
+				7DD3A16F0E980CE50023CB74 /* explode.cpp */,
+				7DD3A1700E980CE50023CB74 /* extract.cpp */,
+				7DD3A1710E980CE50023CB74 /* wave.cpp */,
+				7DD3A1720E980CE50023CB74 /* parser.cpp */,
+				7DD3A1730E980CE50023CB74 /* mpq.h */,
+				7DD3A1740E980CE50023CB74 /* mpq.cpp */,
+				7DD3A1750E980CE50023CB74 /* zlib.h */,
+				7DD3A1760E980CE50023CB74 /* zconf.h */,
+				7DD3A1770E980CE50023CB74 /* wave.h */,
+				7DD3A1780E980CE50023CB74 /* common.h */,
+				7DD3A1790E980CE50023CB74 /* explode.h */,
+				7DD3A17A0E980CE50023CB74 /* common.cpp */,
+				7DD3A17B0E980CE50023CB74 /* huffman.cpp */,
+			);
+			name = libmpq;
+			sourceTree = "<group>";
+		};
+		7DD3A19B0E9810470023CB74 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				7DD3A1A10E9811A00023CB74 /* libz.dylib */,
+			);
+			name = Libraries;
+			sourceTree = "<group>";
+		};
+		C6859E8C029090F304C91782 /* Documentation */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Documentation;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		7DA32C650E980BC50060F599 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7DD3A17C0E980CE50023CB74 /* huffman.h in Headers */,
+				7DD3A1810E980CE50023CB74 /* mpq.h in Headers */,
+				7DD3A1830E980CE50023CB74 /* zlib.h in Headers */,
+				7DD3A1840E980CE50023CB74 /* zconf.h in Headers */,
+				7DD3A1850E980CE50023CB74 /* wave.h in Headers */,
+				7DD3A1860E980CE50023CB74 /* common.h in Headers */,
+				7DD3A1870E980CE50023CB74 /* explode.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		7DA32C680E980BC50060F599 /* libmpq */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7DA32C6D0E980BF00060F599 /* Build configuration list for PBXNativeTarget "libmpq" */;
+			buildPhases = (
+				7DA32C650E980BC50060F599 /* Headers */,
+				7DA32C660E980BC50060F599 /* Sources */,
+				7DA32C670E980BC50060F599 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = libmpq;
+			productName = mpq;
+			productReference = 7DA32C690E980BC50060F599 /* libmpq.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		8DD76F620486A84900D96B5E /* ad */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1DEB923108733DC60010E9CD /* Build configuration list for PBXNativeTarget "ad" */;
+			buildPhases = (
+				8DD76F640486A84900D96B5E /* Sources */,
+				8DD76F660486A84900D96B5E /* Frameworks */,
+				8DD76F690486A84900D96B5E /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7DD3A19E0E9810B70023CB74 /* PBXTargetDependency */,
+			);
+			name = ad;
+			productInstallPath = "$(HOME)/bin";
+			productName = mangos_extractor;
+			productReference = 8DD76F6C0486A84900D96B5E /* ad */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "ad" */;
+			compatibilityVersion = "Xcode 3.1";
+			hasScannedForEncodings = 1;
+			mainGroup = 08FB7794FE84155DC02AAC07 /* mangos_extractor */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8DD76F620486A84900D96B5E /* ad */,
+				7DA32C680E980BC50060F599 /* libmpq */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7DA32C660E980BC50060F599 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7DD3A17D0E980CE50023CB74 /* explode.cpp in Sources */,
+				7DD3A17E0E980CE50023CB74 /* extract.cpp in Sources */,
+				7DD3A17F0E980CE50023CB74 /* wave.cpp in Sources */,
+				7DD3A1800E980CE50023CB74 /* parser.cpp in Sources */,
+				7DD3A1820E980CE50023CB74 /* mpq.cpp in Sources */,
+				7DD3A1880E980CE50023CB74 /* common.cpp in Sources */,
+				7DD3A1890E980CE50023CB74 /* huffman.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DD76F640486A84900D96B5E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7DD3A1910E980D2D0023CB74 /* adt.cpp in Sources */,
+				7DD3A1920E980D2D0023CB74 /* System.cpp in Sources */,
+				7DD3A1930E980D2D0023CB74 /* mpq_libmpq.cpp in Sources */,
+				7DD3A1940E980D2D0023CB74 /* dbcfile.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		7DD3A19E0E9810B70023CB74 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7DA32C680E980BC50060F599 /* libmpq */;
+			targetProxy = 7DD3A19D0E9810B70023CB74 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1DEB923208733DC60010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"_GLIBCXX_DEBUG=1",
+					"_GLIBCXX_DEBUG_PEDANTIC=1",
+				);
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = ad;
+			};
+			name = Debug;
+		};
+		1DEB923308733DC60010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = ad;
+			};
+			name = Release;
+		};
+		1DEB923608733DC60010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.4;
+			};
+			name = Debug;
+		};
+		1DEB923708733DC60010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.4;
+				SEPARATE_STRIP = YES;
+			};
+			name = Release;
+		};
+		7DA32C6A0E980BC50060F599 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INSTALL_PATH = /usr/local/lib;
+				PREBINDING = NO;
+				PRODUCT_NAME = mpq;
+			};
+			name = Debug;
+		};
+		7DA32C6B0E980BC50060F599 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/lib;
+				PREBINDING = NO;
+				PRODUCT_NAME = mpq;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1DEB923108733DC60010E9CD /* Build configuration list for PBXNativeTarget "ad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB923308733DC60010E9CD /* Release */,
+				1DEB923208733DC60010E9CD /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "ad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB923708733DC60010E9CD /* Release */,
+				1DEB923608733DC60010E9CD /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7DA32C6D0E980BF00060F599 /* Build configuration list for PBXNativeTarget "libmpq" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7DA32C6B0E980BC50060F599 /* Release */,
+				7DA32C6A0E980BC50060F599 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}

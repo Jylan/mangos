@@ -179,10 +179,11 @@ void ExtractMapsFromMpq()
                 done++;
             }
             //draw progess bar
-            printf("Processing........................%d%%\r",(100*done)/total);
+            printf("\rProcessing........................%d%%",(100*done)/total);
         }
     }
 
+    printf("\n");
     delete [] areas;
     delete [] map_ids;
 }
@@ -288,6 +289,17 @@ int main(int argc, char * arg[])
 {
     printf("Map & DBC Extractor\n");
     printf("===================\n\n");
+
+#if defined( __APPLE__ ) && defined( __MACH__ )
+// OS X: Set the working directory to the executable path, allows double-click in Finder
+if (strrchr(arg[0],'/'))
+{
+    char execPath[128];
+    strcpy(execPath,arg[0]);
+    *(strrchr(execPath,'/'))=0;
+    chdir(execPath);
+}
+#endif
 
     HandleArgs(argc, arg);
 

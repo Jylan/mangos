@@ -464,7 +464,6 @@ void World::LoadConfigSettings(bool reload)
     rate_values[RATE_XP_KILL]     = sConfig.GetFloatDefault("Rate.XP.Kill", 1.0f);
     rate_values[RATE_XP_QUEST]    = sConfig.GetFloatDefault("Rate.XP.Quest", 1.0f);
     rate_values[RATE_XP_EXPLORE]  = sConfig.GetFloatDefault("Rate.XP.Explore", 1.0f);
-    rate_values[RATE_XP_PAST_70]  = sConfig.GetFloatDefault("Rate.XP.PastLevel70", 1.0f);
     rate_values[RATE_REPUTATION_GAIN]  = sConfig.GetFloatDefault("Rate.Reputation.Gain", 1.0f);
     rate_values[RATE_CREATURE_NORMAL_DAMAGE]          = sConfig.GetFloatDefault("Rate.Creature.Normal.Damage", 1.0f);
     rate_values[RATE_CREATURE_ELITE_ELITE_DAMAGE]     = sConfig.GetFloatDefault("Rate.Creature.Elite.Elite.Damage", 1.0f);
@@ -1070,7 +1069,7 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Script Names...");
     objmgr.LoadScriptNames();
 
-    sLog.outString( "Loading InstanceTemplate" );
+    sLog.outString( "Loading InstanceTemplate..." );
     objmgr.LoadInstanceTemplate();
 
     sLog.outString( "Loading SkillLineAbilityMultiMap Data..." );
@@ -1083,6 +1082,7 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Packing instances..." );
     sInstanceSaveManager.PackInstances();
 
+    sLog.outString();
     sLog.outString( "Loading Localization strings..." );
     objmgr.LoadCreatureLocales();
     objmgr.LoadGameObjectLocales();
@@ -1092,6 +1092,8 @@ void World::SetInitialWorldSettings()
     objmgr.LoadPageTextLocales();
     objmgr.LoadNpcOptionLocales();
     objmgr.SetDBCLocaleIndex(GetDefaultDbcLocale());        // Get once for all the locale index of DBC language (console/broadcasts)
+    sLog.outString( ">>> Localization strings loaded" );
+    sLog.outString();
 
     sLog.outString( "Loading Page Texts..." );
     objmgr.LoadPageTexts();
@@ -1151,7 +1153,10 @@ void World::SetInitialWorldSettings()
     objmgr.LoadCreatures();
 
     sLog.outString( "Loading Creature Addon Data..." );
+    sLog.outString();
     objmgr.LoadCreatureAddons();                            // must be after LoadCreatureTemplates() and LoadCreatures()
+    sLog.outString( ">>> Creature Addon Data loaded" );
+    sLog.outString();
 
     sLog.outString( "Loading Creature Respawn Data..." );   // must be after PackInstances()
     objmgr.LoadCreatureRespawnTimes();
@@ -1163,7 +1168,10 @@ void World::SetInitialWorldSettings()
     objmgr.LoadGameobjectRespawnTimes();
 
     sLog.outString( "Loading Game Event Data...");
+    sLog.outString();
     gameeventmgr.LoadFromDB();
+    sLog.outString( ">>> Game Event Data loaded" );
+    sLog.outString();
 
     sLog.outString( "Loading Weather Data..." );
     objmgr.LoadWeatherZoneChances();
@@ -1172,7 +1180,10 @@ void World::SetInitialWorldSettings()
     objmgr.LoadQuests();                                    // must be loaded after DBCs, creature_template, item_template, gameobject tables
 
     sLog.outString( "Loading Quests Relations..." );
+    sLog.outString();
     objmgr.LoadQuestRelations();                            // must be after quest load
+    sLog.outString( ">>> Quests Relations loaded" );
+    sLog.outString();
 
     sLog.outString( "Loading AreaTrigger definitions..." );
     objmgr.LoadAreaTriggerTeleports();                      // must be after item template load
@@ -1201,8 +1212,11 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading pet levelup spells..." );
     spellmgr.LoadPetLevelupSpellMap();
 
-    sLog.outString( "Loading player Create Info & Level Stats..." );
+    sLog.outString( "Loading Player Create Info & Level Stats..." );
+    sLog.outString();
     objmgr.LoadPlayerInfo();
+    sLog.outString( ">>> Player Create Info & Level Stats loaded" );
+    sLog.outString();
 
     sLog.outString( "Loading Exploration BaseXP Data..." );
     objmgr.LoadExplorationBaseXP();
@@ -1220,7 +1234,10 @@ void World::SetInitialWorldSettings()
     objmgr.LoadCorpses();
 
     sLog.outString( "Loading Loot Tables..." );
+    sLog.outString();
     LoadLootTables();
+    sLog.outString( ">>> Loot Tables loaded" );
+    sLog.outString();
 
     sLog.outString( "Loading Skill Discovery Table..." );
     LoadSkillDiscoveryTable();
@@ -1231,22 +1248,22 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Skill Fishing base level requirements..." );
     objmgr.LoadFishingBaseSkillLevel();
 
-    sLog.outString( "Loading AchievementCriteriaList..." );
+    sLog.outString( "Loading Achievements..." );
+    sLog.outString();
     achievementmgr.LoadAchievementCriteriaList();
-
-    sLog.outString( "Loading achievement rewards..." );
     achievementmgr.LoadRewards();
-
-    sLog.outString( "Loading achievement reward locale strings..." );
     achievementmgr.LoadRewardLocales();
-
-    sLog.outString( "Loading completed achievements..." );
     achievementmgr.LoadCompletedAchievements();
+    sLog.outString( ">>> Achievements loaded" );
+    sLog.outString();
 
     ///- Load dynamic data tables from the database
     sLog.outString( "Loading Auctions..." );
+    sLog.outString();
     objmgr.LoadAuctionItems();
     objmgr.LoadAuctions();
+    sLog.outString( ">>> Auctions loaded" );
+    sLog.outString();
 
     sLog.outString( "Loading Guilds..." );
     objmgr.LoadGuilds();
@@ -1260,7 +1277,7 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading ReservedNames..." );
     objmgr.LoadReservedPlayersNames();
 
-    sLog.outString( "Loading GameObject for quests..." );
+    sLog.outString( "Loading GameObjects for quests..." );
     objmgr.LoadGameObjectForQuests();
 
     sLog.outString( "Loading BattleMasters..." );
@@ -1275,13 +1292,14 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Npc Options..." );
     objmgr.LoadNpcOptions();
 
-    sLog.outString( "Loading vendors..." );
+    sLog.outString( "Loading Vendors..." );
     objmgr.LoadVendors();                                   // must be after load CreatureTemplate and ItemTemplate
 
-    sLog.outString( "Loading trainers..." );
+    sLog.outString( "Loading Trainers..." );
     objmgr.LoadTrainerSpell();                              // must be after load CreatureTemplate
 
     sLog.outString( "Loading Waypoints..." );
+    sLog.outString();
     WaypointMgr.Load();
 
     sLog.outString( "Loading GM tickets...");
@@ -1293,11 +1311,14 @@ void World::SetInitialWorldSettings()
 
     ///- Load and initialize scripts
     sLog.outString( "Loading Scripts..." );
+    sLog.outString();
     objmgr.LoadQuestStartScripts();                         // must be after load Creature/Gameobject(Template/Data) and QuestTemplate
     objmgr.LoadQuestEndScripts();                           // must be after load Creature/Gameobject(Template/Data) and QuestTemplate
     objmgr.LoadSpellScripts();                              // must be after load Creature/Gameobject(Template/Data)
     objmgr.LoadGameObjectScripts();                         // must be after load Creature/Gameobject(Template/Data)
     objmgr.LoadEventScripts();                              // must be after load Creature/Gameobject(Template/Data)
+    sLog.outString( ">>> Scripts loaded" );
+    sLog.outString();
 
     sLog.outString( "Loading Scripts text locales..." );    // must be after Load*Scripts calls
     objmgr.LoadDbScriptStrings();
@@ -1410,10 +1431,11 @@ void World::DetectDBCLang()
     m_defaultDbcLocale = LocaleConstant(default_locale);
 
     sLog.outString("Using %s DBC Locale as default. All available DBC locales: %s",localeNames[m_defaultDbcLocale],availableLocalsStr.empty() ? "<none>" : availableLocalsStr.c_str());
+    sLog.outString();
 }
 
 /// Update the World !
-void World::Update(time_t diff)
+void World::Update(uint32 diff)
 {
     ///- Update the different timers
     for(int i = 0; i < WUPDATE_COUNT; i++)
@@ -2592,7 +2614,7 @@ void World::SendServerMessage(uint32 type, const char *text, Player* player)
         SendGlobalMessage( &data );
 }
 
-void World::UpdateSessions( time_t diff )
+void World::UpdateSessions( uint32 diff )
 {
     ///- Add new sessions
     while(!addSessQueue.empty())

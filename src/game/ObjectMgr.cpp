@@ -766,6 +766,19 @@ void ObjectMgr::LoadCreatureTemplates()
         if((cInfo->npcflag & UNIT_NPC_FLAG_TRAINER) && cInfo->trainer_type >= MAX_TRAINER_TYPE)
             sLog.outErrorDb("Creature (Entry: %u) has wrong trainer type %u",cInfo->Entry,cInfo->trainer_type);
 
+        if(cInfo->type && !sCreatureTypeStore.LookupEntry(cInfo->type))
+        {
+            sLog.outErrorDb("Creature (Entry: %u) has invalid creature type (%u) in `type`",cInfo->Entry,cInfo->type);
+            const_cast<CreatureInfo*>(cInfo)->type = CREATURE_TYPE_HUMANOID;
+        }
+
+        // must exist or used hidden but used in data horse case
+        if(cInfo->family && !sCreatureFamilyStore.LookupEntry(cInfo->family) && cInfo->family != CREATURE_FAMILY_HORSE_CUSTOM )
+        {
+            sLog.outErrorDb("Creature (Entry: %u) has invalid creature family (%u) in `family`",cInfo->Entry,cInfo->family);
+            const_cast<CreatureInfo*>(cInfo)->family = 0;
+        }
+
         if(cInfo->InhabitType <= 0 || cInfo->InhabitType > INHABIT_ANYWHERE)
         {
             sLog.outErrorDb("Creature (Entry: %u) has wrong value (%u) in `InhabitType`, creature will not correctly walk/swim/fly",cInfo->Entry,cInfo->InhabitType);
@@ -1447,18 +1460,36 @@ void ObjectMgr::LoadAuctions()
 {
     QueryResult *result = CharacterDatabase.Query("SELECT COUNT(*) FROM auctionhouse");
     if( !result )
+    {
+        barGoLink bar(1);
+        bar.step();
+        sLog.outString("");
+        sLog.outString(">> Loaded 0 auctions. DB table `auctionhouse` is empty.");
         return;
+    }
 
     Field *fields = result->Fetch();
     uint32 AuctionCount=fields[0].GetUInt32();
     delete result;
 
     if(!AuctionCount)
+    {
+        barGoLink bar(1);
+        bar.step();
+        sLog.outString("");
+        sLog.outString(">> Loaded 0 auctions. DB table `auctionhouse` is empty.");
         return;
+    }
 
     result = CharacterDatabase.Query( "SELECT id,auctioneerguid,itemguid,item_template,itemowner,buyoutprice,time,buyguid,lastbid,startbid,deposit,location FROM auctionhouse" );
     if( !result )
+    {
+        barGoLink bar(1);
+        bar.step();
+        sLog.outString("");
+        sLog.outString(">> Loaded 0 auctions. DB table `auctionhouse` is empty.");
         return;
+    }
 
     barGoLink bar( AuctionCount );
 
@@ -1499,7 +1530,6 @@ void ObjectMgr::LoadAuctions()
 
     sLog.outString();
     sLog.outString( ">> Loaded %u auctions", AuctionCount );
-    sLog.outString();
 }
 
 void ObjectMgr::LoadItemLocales()
@@ -1598,6 +1628,32 @@ void ObjectMgr::LoadItemPrototypes()
 
         if(dbcitem)
         {
+            if(proto->Class != dbcitem->Class)
+            {
+                sLog.outErrorDb("Item (Entry: %u) not correct class %u, must be %u (still using DB value).",i,proto->Class,dbcitem->Class);
+                // It safe let use Class from DB
+            }
+            /* disabled: have some strange wrong cases for Subclass values.
+               for enable also uncomment Subclass field in ItemEntry structure and in Itemfmt[]
+            if(proto->SubClass != dbcitem->SubClass)
+            {
+                sLog.outErrorDb("Item (Entry: %u) not correct (Class: %u, Sub: %u) pair, must be (Class: %u, Sub: %u) (still using DB value).",i,proto->Class,proto->SubClass,dbcitem->Class,dbcitem->SubClass);
+                // It safe let use Subclass from DB
+            }
+            */
+
+            if(proto->Unk0 != dbcitem->Unk0)
+            {
+                sLog.outErrorDb("Item (Entry: %u) not correct %i Unk0, must be %i (still using DB value).",i,proto->Unk0,dbcitem->Unk0);
+                // It safe let use Unk0 from DB
+            }
+
+            if(proto->Material != dbcitem->Material)
+            {
+                sLog.outErrorDb("Item (Entry: %u) not correct %i material, must be %i (still using DB value).",i,proto->Material,dbcitem->Material);
+                // It safe let use Material from DB
+            }
+
             if(proto->InventoryType != dbcitem->InventoryType)
             {
                 sLog.outErrorDb("Item (Entry: %u) not correct %u inventory type, must be %u (still using DB value).",i,proto->InventoryType,dbcitem->InventoryType);
@@ -1907,7 +1963,13 @@ void ObjectMgr::LoadAuctionItems()
     QueryResult *result = CharacterDatabase.Query( "SELECT data,itemguid,item_template FROM auctionhouse JOIN item_instance ON itemguid = guid" );
 
     if( !result )
+    {
+        barGoLink bar(1);
+        bar.step();
+        sLog.outString("");
+        sLog.outString(">> Loaded 0 auction items");
         return;
+    }
 
     barGoLink bar( result->GetRowCount() );
 
@@ -1942,7 +2004,6 @@ void ObjectMgr::LoadAuctionItems()
         ++count;
     }
     while( result->NextRow() );
-
     delete result;
 
     sLog.outString();
@@ -2531,6 +2592,67 @@ void ObjectMgr::LoadPlayerInfo()
                     pInfo->levelInfo[level] = pInfo->levelInfo[level-1];
                 }
             }
+        }
+    }
+
+    // Loading xp per level data
+    {
+        mPlayerXPperLevel.resize(sWorld.getConfig(CONFIG_MAX_PLAYER_LEVEL));
+        for (uint32 level = 0; level < sWorld.getConfig(CONFIG_MAX_PLAYER_LEVEL); ++level)
+            mPlayerXPperLevel[level] = 0;
+
+        //                                                 0    1
+        QueryResult *result  = WorldDatabase.Query("SELECT lvl, xp_for_next_level FROM player_xp_for_level");
+
+        uint32 count = 0;
+
+        if (!result)
+        {
+            barGoLink bar( 1 );
+
+            sLog.outString();
+            sLog.outString( ">> Loaded %u xp for level definitions", count );
+            sLog.outErrorDb( "Error loading `player_xp_for_level` table or empty table.");
+            exit(1);
+        }
+
+        barGoLink bar( result->GetRowCount() );
+
+        do
+        {
+            Field* fields = result->Fetch();
+
+            uint32 current_level = fields[0].GetUInt32();
+            uint32 current_xp    = fields[1].GetUInt32();
+
+            if(current_level >= sWorld.getConfig(CONFIG_MAX_PLAYER_LEVEL))
+            {
+                if(current_level > STRONG_MAX_LEVEL)        // hardcoded level maximum
+                    sLog.outErrorDb("Wrong (> %u) level %u in `player_xp_for_level` table, ignoring.", STRONG_MAX_LEVEL,current_level);
+                else
+                    sLog.outDetail("Unused (> MaxPlayerLevel in mangosd.conf) level %u in `player_xp_for_levels` table, ignoring.",current_level);
+                continue;
+            }
+            //PlayerXPperLevel
+            mPlayerXPperLevel[current_level] = current_xp;
+            bar.step();
+            ++count;
+        }
+        while (result->NextRow());
+
+        delete result;
+
+        sLog.outString();
+        sLog.outString( ">> Loaded %u xp for level definitions", count );
+    }
+
+    // fill level gaps
+    for (uint32 level = 1; level < sWorld.getConfig(CONFIG_MAX_PLAYER_LEVEL); ++level)
+    {
+        if( mPlayerXPperLevel[level] == 0)
+        {
+            sLog.outErrorDb("Level %i does not have XP for level data. Using data of level [%i] + 100.",level+1, level);
+            mPlayerXPperLevel[level] = mPlayerXPperLevel[level-1]+100;
         }
     }
 }
@@ -4249,14 +4371,20 @@ void ObjectMgr::LoadInstanceTemplate()
         else if(!entry->HasResetTime())
             continue;
 
+        //FIXME: now exist heroic instance, normal/heroic raid instances
+        // entry->resetTimeHeroic store reset time for both heroic mode instance (raid and non-raid)
+        // entry->resetTimeRaid   store reset time for normal raid only
+        // for current state  entry->resetTimeRaid == entry->resetTimeHeroic in case raid instances with heroic mode.
+        // but at some point wee need implement reset time dependen from raid insatance mode
         if(temp->reset_delay == 0)
         {
             // use defaults from the DBC
-            if(entry->SupportsHeroicMode())
+            if(entry->resetTimeHeroic)                      // for both raid and non raids, read above
             {
                 temp->reset_delay = entry->resetTimeHeroic / DAY;
             }
             else if (entry->resetTimeRaid && entry->map_type == MAP_RAID)
+                                                            // for normal raid only
             {
                 temp->reset_delay = entry->resetTimeRaid / DAY;
             }
@@ -4434,14 +4562,27 @@ void ObjectMgr::ReturnOrDeleteOldMails(bool serverUp)
     //                                                     0  1           2      3        4          5         6           7   8       9
     QueryResult* result = CharacterDatabase.PQuery("SELECT id,messageType,sender,receiver,itemTextId,has_items,expire_time,cod,checked,mailTemplateId FROM mail WHERE expire_time < '" I64FMTD "'", (uint64)basetime);
     if ( !result )
+    {
+        barGoLink bar(1);
+        bar.step();
+        sLog.outString("");
+        sLog.outString(">> Only expired mails (need to be return or delete) or DB table `mail` is empty.");
         return;                                             // any mails need to be returned or deleted
-    Field *fields;
+    }
+
     //std::ostringstream delitems, delmails; //will be here for optimization
     //bool deletemail = false, deleteitem = false;
     //delitems << "DELETE FROM item_instance WHERE guid IN ( ";
     //delmails << "DELETE FROM mail WHERE id IN ( "
+
+    barGoLink bar( result->GetRowCount() );
+    uint32 count = 0;
+    Field *fields;
+
     do
     {
+        bar.step();
+
         fields = result->Fetch();
         Mail *m = new Mail;
         m->messageID = fields[0].GetUInt32();
@@ -4507,8 +4648,12 @@ void ObjectMgr::ReturnOrDeleteOldMails(bool serverUp)
         //delmails << m->messageID << ", ";
         CharacterDatabase.PExecute("DELETE FROM mail WHERE id = '%u'", m->messageID);
         delete m;
+        ++count;
     } while (result->NextRow());
     delete result;
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u mails", count );
 }
 
 void ObjectMgr::LoadQuestAreaTriggers()
@@ -4665,7 +4810,7 @@ void ObjectMgr::LoadAreaTriggerScripts()
     sLog.outString( ">> Loaded %u areatrigger scripts", count );
 }
 
-uint32 ObjectMgr::GetNearestTaxiNode( float x, float y, float z, uint32 mapid )
+uint32 ObjectMgr::GetNearestTaxiNode( float x, float y, float z, uint32 mapid, uint32 team )
 {
     bool found = false;
     float dist;
@@ -4674,23 +4819,30 @@ uint32 ObjectMgr::GetNearestTaxiNode( float x, float y, float z, uint32 mapid )
     for(uint32 i = 1; i < sTaxiNodesStore.GetNumRows(); ++i)
     {
         TaxiNodesEntry const* node = sTaxiNodesStore.LookupEntry(i);
-        if(node && node->map_id == mapid)
+        if(!node || node->map_id != mapid || !node->MountCreatureID[team == ALLIANCE ? 1 : 0])
+            continue;
+
+        uint8  field   = (uint8)((i - 1) / 32);
+        uint32 submask = 1<<((i-1)%32);
+
+        // skip not taxi network nodes
+        if((sTaxiNodesMask[field] & submask)==0)
+            continue;
+
+        float dist2 = (node->x - x)*(node->x - x)+(node->y - y)*(node->y - y)+(node->z - z)*(node->z - z);
+        if(found)
         {
-            float dist2 = (node->x - x)*(node->x - x)+(node->y - y)*(node->y - y)+(node->z - z)*(node->z - z);
-            if(found)
+            if(dist2 < dist)
             {
-                if(dist2 < dist)
-                {
-                    dist = dist2;
-                    id = i;
-                }
-            }
-            else
-            {
-                found = true;
                 dist = dist2;
                 id = i;
             }
+        }
+        else
+        {
+            found = true;
+            dist = dist2;
+            id = i;
         }
     }
 
@@ -5688,6 +5840,13 @@ uint32 ObjectMgr::GetBaseXP(uint32 level)
     return mBaseXPTable[level] ? mBaseXPTable[level] : 0;
 }
 
+uint32 ObjectMgr::GetXPForLevel(uint32 level)
+{
+    if (level < mPlayerXPperLevel.size())
+        return mPlayerXPperLevel[level];
+    return 0;
+}
+
 void ObjectMgr::LoadPetNames()
 {
     uint32 count = 0;
@@ -6361,11 +6520,22 @@ void ObjectMgr::LoadGameObjectForQuests()
 {
     mGameObjectForQuestSet.clear();                         // need for reload case
 
+    if( !sGOStorage.MaxEntry )
+    {
+        barGoLink bar( 1 );
+        bar.step();
+        sLog.outString();
+        sLog.outString( ">> Loaded 0 GameObjects for quests" );
+        return;
+    }
+
+    barGoLink bar( sGOStorage.MaxEntry - 1 );
     uint32 count = 0;
 
     // collect GO entries for GO that must activated
     for(uint32 go_entry = 1; go_entry < sGOStorage.MaxEntry; ++go_entry)
     {
+        bar.step();
         GameObjectInfo const* goInfo = sGOStorage.LookupEntry<GameObjectInfo>(go_entry);
         if(!goInfo)
             continue;
@@ -6400,7 +6570,7 @@ void ObjectMgr::LoadGameObjectForQuests()
     }
 
     sLog.outString();
-    sLog.outString( ">> Loaded %u GameObject for quests", count );
+    sLog.outString( ">> Loaded %u GameObjects for quests", count );
 }
 
 bool ObjectMgr::LoadMangosStrings(DatabaseType& db, char const* table, int32 min_value, int32 max_value)
@@ -6892,11 +7062,10 @@ void ObjectMgr::LoadGameTele()
         ++count;
     }
     while (result->NextRow());
-
     delete result;
 
     sLog.outString();
-    sLog.outString( ">> Loaded %u game tele's", count );
+    sLog.outString( ">> Loaded %u GameTeleports", count );
 }
 
 GameTele const* ObjectMgr::GetGameTele(const std::string& name) const
@@ -7040,6 +7209,19 @@ void ObjectMgr::LoadTrainerSpell()
         if(!pTrainerSpell->reqlevel)
             pTrainerSpell->reqlevel = spellinfo->spellLevel;
 
+        // calculate learned spell for profession case when stored cast-spell
+        pTrainerSpell->learned_spell = spell;
+        for(int i = 0; i <3; ++i)
+        {
+            if(spellinfo->Effect[i]!=SPELL_EFFECT_LEARN_SPELL)
+                continue;
+
+            if(SpellMgr::IsProfessionOrRidingSpell(spellinfo->EffectTriggerSpell[i]))
+            {
+                pTrainerSpell->learned_spell = spellinfo->EffectTriggerSpell[i];
+                break;
+            }
+        }
 
         TrainerSpellData& data = m_mCacheTrainerSpellMap[entry];
 
@@ -7053,7 +7235,7 @@ void ObjectMgr::LoadTrainerSpell()
     delete result;
 
     sLog.outString();
-    sLog.outString( ">> Loaded Trainers %d", count );
+    sLog.outString( ">> Loaded %d Trainers", count );
 }
 
 void ObjectMgr::LoadVendors()
@@ -7331,16 +7513,30 @@ void ObjectMgr::LoadScriptNames()
       "SELECT DISTINCT(ScriptName) FROM areatrigger_scripts WHERE ScriptName <> '' "
       "UNION "
       "SELECT DISTINCT(script) FROM instance_template WHERE script <> ''");
-    if(result)
+
+    if( !result )
     {
-        do
-        {
-            m_scriptNames.push_back((*result)[0].GetString());
-        } while (result->NextRow());
-        delete result;
+        barGoLink bar( 1 );
+        bar.step();
+        sLog.outString();
+        sLog.outErrorDb(">> Loaded empty set of Script Names!");
+        return;
     }
 
+    barGoLink bar( result->GetRowCount() );
+    uint32 count = 0;
+
+    do
+    {
+        bar.step();
+        m_scriptNames.push_back((*result)[0].GetString());
+        ++count;
+    } while (result->NextRow());
+    delete result;
+
     std::sort(m_scriptNames.begin(), m_scriptNames.end());
+    sLog.outString();
+    sLog.outString( ">> Loaded %d Script Names", count );
 }
 
 uint32 ObjectMgr::GetScriptId(const char *name)

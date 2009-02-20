@@ -20,6 +20,7 @@
 #include "Database/DatabaseEnv.h"
 #include "Database/SQLStorage.h"
 #include "Database/SQLStorageImpl.h"
+#include "Policies/SingletonImp.h"
 
 #include "Log.h"
 #include "MapManager.h"
@@ -33,7 +34,6 @@
 #include "ArenaTeam.h"
 #include "Transports.h"
 #include "ProgressBar.h"
-#include "Policies/SingletonImp.h"
 #include "Language.h"
 #include "GameEvent.h"
 #include "Spell.h"
@@ -121,9 +121,9 @@ ObjectMgr::ObjectMgr()
     m_hiPetNumber       = 1;
     m_ItemTextId        = 1;
     m_mailid            = 1;
-    m_auctionid         = 1;
     m_guildId           = 1;
     m_arenaTeamId       = 1;
+    m_auctionid         = 1;
 
     mGuildBankTabPrice.resize(GUILD_BANK_MAX_TABS);
     mGuildBankTabPrice[0] = 100;
@@ -140,24 +140,10 @@ ObjectMgr::ObjectMgr()
 ObjectMgr::~ObjectMgr()
 {
     for( QuestMap::iterator i = mQuestTemplates.begin( ); i != mQuestTemplates.end( ); ++i )
-    {
         delete i->second;
-    }
-    mQuestTemplates.clear( );
-
-    for( GossipTextMap::iterator i = mGossipText.begin( ); i != mGossipText.end( ); ++i )
-    {
-        delete i->second;
-    }
-    mGossipText.clear( );
-
-    mAreaTriggers.clear();
 
     for(PetLevelInfoMap::iterator i = petInfo.begin( ); i != petInfo.end( ); ++i )
-    {
         delete[] i->second;
-    }
-    petInfo.clear();
 
     // free only if loaded
     for (int class_ = 0; class_ < MAX_CLASSES; ++class_)
@@ -170,10 +156,8 @@ ObjectMgr::~ObjectMgr()
     // free group and guild objects
     for (GroupSet::iterator itr = mGroupSet.begin(); itr != mGroupSet.end(); ++itr)
         delete (*itr);
-    for (GuildSet::iterator itr = mGuildSet.begin(); itr != mGuildSet.end(); ++itr)
-        delete (*itr);
 
-    for(ItemMap::iterator itr = mAitems.begin(); itr != mAitems.end(); ++itr)
+    for (GuildMap::iterator itr = mGuildMap.begin(); itr != mGuildMap.end(); ++itr)
         delete itr->second;
 
     for (CacheVendorItemMap::iterator itr = m_mCacheVendorItemMap.begin(); itr != m_mCacheVendorItemMap.end(); ++itr)
@@ -192,43 +176,53 @@ Group * ObjectMgr::GetGroupByLeader(const uint64 &guid) const
     return NULL;
 }
 
-Guild * ObjectMgr::GetGuildById(const uint32 GuildId) const
+Guild * ObjectMgr::GetGuildById(uint32 GuildId) const
 {
-    for(GuildSet::const_iterator itr = mGuildSet.begin(); itr != mGuildSet.end(); ++itr)
-        if ((*itr)->GetId() == GuildId)
-            return *itr;
+    GuildMap::const_iterator itr = mGuildMap.find(GuildId);
+    if (itr != mGuildMap.end())
+        return itr->second;
 
     return NULL;
 }
 
 Guild * ObjectMgr::GetGuildByName(const std::string& guildname) const
 {
-    for(GuildSet::const_iterator itr = mGuildSet.begin(); itr != mGuildSet.end(); ++itr)
-        if ((*itr)->GetName() == guildname)
-            return *itr;
+    for(GuildMap::const_iterator itr = mGuildMap.begin(); itr != mGuildMap.end(); ++itr)
+        if (itr->second->GetName() == guildname)
+            return itr->second;
 
     return NULL;
 }
 
-std::string ObjectMgr::GetGuildNameById(const uint32 GuildId) const
+std::string ObjectMgr::GetGuildNameById(uint32 GuildId) const
 {
-    for(GuildSet::const_iterator itr = mGuildSet.begin(); itr != mGuildSet.end(); ++itr)
-        if ((*itr)->GetId() == GuildId)
-            return (*itr)->GetName();
+    GuildMap::const_iterator itr = mGuildMap.find(GuildId);
+    if (itr != mGuildMap.end())
+        return itr->second->GetName();
 
     return "";
 }
 
 Guild* ObjectMgr::GetGuildByLeader(const uint64 &guid) const
 {
-    for(GuildSet::const_iterator itr = mGuildSet.begin(); itr != mGuildSet.end(); ++itr)
-        if( (*itr)->GetLeader() == guid)
-            return *itr;
+    for(GuildMap::const_iterator itr = mGuildMap.begin(); itr != mGuildMap.end(); ++itr)
+        if (itr->second->GetLeader() == guid)
+            return itr->second;
 
     return NULL;
 }
 
-ArenaTeam* ObjectMgr::GetArenaTeamById(const uint32 arenateamid) const
+void ObjectMgr::AddGuild(Guild* guild)
+{
+    mGuildMap[guild->GetId()] = guild;
+}
+
+void ObjectMgr::RemoveGuild(uint32 Id)
+{
+    mGuildMap.erase(Id);
+}
+
+ArenaTeam* ObjectMgr::GetArenaTeamById(uint32 arenateamid) const
 {
     ArenaTeamMap::const_iterator itr = mArenaTeamMap.find(arenateamid);
     if (itr != mArenaTeamMap.end())
@@ -260,257 +254,9 @@ void ObjectMgr::AddArenaTeam(ArenaTeam* arenaTeam)
     mArenaTeamMap[arenaTeam->GetId()] = arenaTeam;
 }
 
-void ObjectMgr::RemoveArenaTeam(ArenaTeam* arenaTeam)
+void ObjectMgr::RemoveArenaTeam(uint32 Id)
 {
-    mArenaTeamMap.erase( arenaTeam->GetId() );
-}
-
-AuctionHouseObject * ObjectMgr::GetAuctionsMap( AuctionLocation location )
-{
-    switch ( location )
-    {
-        case AUCTION_HORDE:
-            return & mHordeAuctions;
-            break;
-        case AUCTION_ALLIANCE:
-            return & mAllianceAuctions;
-            break;
-        default:                                            //neutral
-            return & mNeutralAuctions;
-    }
-}
-
-uint32 ObjectMgr::GetAuctionCut(AuctionLocation location, uint32 highBid)
-{
-    if (location == AUCTION_NEUTRAL && !sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
-        return (uint32) (0.15f * highBid * sWorld.getRate(RATE_AUCTION_CUT));
-    else
-        return (uint32) (0.05f * highBid * sWorld.getRate(RATE_AUCTION_CUT));
-}
-
-uint32 ObjectMgr::GetAuctionDeposit(AuctionLocation location, uint32 time, Item *pItem)
-{
-    float percentance;                                      // in 0..1
-    if (location == AUCTION_NEUTRAL && !sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
-        percentance = 0.75f;
-    else
-        percentance = 0.15f;
-
-    percentance *= sWorld.getRate(RATE_AUCTION_DEPOSIT);
-
-    return uint32( percentance * pItem->GetProto()->SellPrice * pItem->GetCount() * (time / MIN_AUCTION_TIME ) );
-}
-
-/// the sum of outbid is (1% from current bid)*5, if bid is very small, it is 1c
-uint32 ObjectMgr::GetAuctionOutBid(uint32 currentBid)
-{
-    uint32 outbid = (currentBid / 100) * 5;
-    if (!outbid)
-        outbid = 1;
-    return outbid;
-}
-
-//does not clear ram
-void ObjectMgr::SendAuctionWonMail( AuctionEntry *auction )
-{
-    Item *pItem = GetAItem(auction->item_guidlow);
-    if(!pItem)
-        return;
-
-    uint64 bidder_guid = MAKE_NEW_GUID(auction->bidder, 0, HIGHGUID_PLAYER);
-    Player *bidder = GetPlayer(bidder_guid);
-
-    uint32 bidder_accId = 0;
-
-    // data for gm.log
-    if( sWorld.getConfig(CONFIG_GM_LOG_TRADE) )
-    {
-        uint32 bidder_security = 0;
-        std::string bidder_name;
-        if (bidder)
-        {
-            bidder_accId = bidder->GetSession()->GetAccountId();
-            bidder_security = bidder->GetSession()->GetSecurity();
-            bidder_name = bidder->GetName();
-        }
-        else
-        {
-            bidder_accId = GetPlayerAccountIdByGUID(bidder_guid);
-            bidder_security = accmgr.GetSecurity(bidder_accId);
-
-            if(bidder_security > SEC_PLAYER )               // not do redundant DB requests
-            {
-                if(!GetPlayerNameByGUID(bidder_guid,bidder_name))
-                    bidder_name = GetMangosStringForDBCLocale(LANG_UNKNOWN);
-            }
-        }
-
-        if( bidder_security > SEC_PLAYER )
-        {
-            std::string owner_name;
-            if(!GetPlayerNameByGUID(auction->owner,owner_name))
-                owner_name = GetMangosStringForDBCLocale(LANG_UNKNOWN);
-
-            uint32 owner_accid = GetPlayerAccountIdByGUID(auction->owner);
-
-            sLog.outCommand(bidder_accId,"GM %s (Account: %u) won item in auction: %s (Entry: %u Count: %u) and pay money: %u. Original owner %s (Account: %u)",
-                bidder_name.c_str(),bidder_accId,pItem->GetProto()->Name1,pItem->GetEntry(),pItem->GetCount(),auction->bid,owner_name.c_str(),owner_accid);
-        }
-    }
-    else if(!bidder)
-        bidder_accId = GetPlayerAccountIdByGUID(bidder_guid);
-
-    // receiver exist
-    if(bidder || bidder_accId)
-    {
-        std::ostringstream msgAuctionWonSubject;
-        msgAuctionWonSubject << auction->item_template << ":0:" << AUCTION_WON;
-
-        std::ostringstream msgAuctionWonBody;
-        msgAuctionWonBody.width(16);
-        msgAuctionWonBody << std::right << std::hex << auction->owner;
-        msgAuctionWonBody << std::dec << ":" << auction->bid << ":" << auction->buyout;
-        sLog.outDebug( "AuctionWon body string : %s", msgAuctionWonBody.str().c_str() );
-
-        //prepare mail data... :
-        uint32 itemTextId = CreateItemText( msgAuctionWonBody.str() );
-
-        // set owner to bidder (to prevent delete item with sender char deleting)
-        // owner in `data` will set at mail receive and item extracting
-        CharacterDatabase.PExecute("UPDATE item_instance SET owner_guid = '%u' WHERE guid='%u'",auction->bidder,pItem->GetGUIDLow());
-        CharacterDatabase.CommitTransaction();
-
-        MailItemsInfo mi;
-        mi.AddItem(auction->item_guidlow, auction->item_template, pItem);
-
-        if (bidder)
-            bidder->GetSession()->SendAuctionBidderNotification( auction->location, auction->Id, bidder_guid, 0, 0, auction->item_template);
-        else
-            RemoveAItem(pItem->GetGUIDLow());               // we have to remove the item, before we delete it !!
-
-        // will delete item or place to receiver mail list
-        WorldSession::SendMailTo(bidder, MAIL_AUCTION, MAIL_STATIONERY_AUCTION, auction->location, auction->bidder, msgAuctionWonSubject.str(), itemTextId, &mi, 0, 0, MAIL_CHECK_MASK_AUCTION);
-    }
-    // receiver not exist
-    else
-    {
-        CharacterDatabase.PExecute("DELETE FROM item_instance WHERE guid='%u'", pItem->GetGUIDLow());
-        RemoveAItem(pItem->GetGUIDLow());                   // we have to remove the item, before we delete it !!
-        delete pItem;
-    }
-}
-
-void ObjectMgr::SendAuctionSalePendingMail( AuctionEntry * auction )
-{
-    uint64 owner_guid = MAKE_NEW_GUID(auction->owner, 0, HIGHGUID_PLAYER);
-    Player *owner = GetPlayer(owner_guid);
-
-    // owner exist (online or offline)
-    if(owner || GetPlayerAccountIdByGUID(owner_guid))
-    {
-        std::ostringstream msgAuctionSalePendingSubject;
-        msgAuctionSalePendingSubject << auction->item_template << ":0:" << AUCTION_SALE_PENDING;
-
-        std::ostringstream msgAuctionSalePendingBody;
-        uint32 auctionCut = GetAuctionCut(auction->location, auction->bid);
-
-        time_t distrTime = time(NULL) + HOUR;
-
-        msgAuctionSalePendingBody.width(16);
-        msgAuctionSalePendingBody << std::right << std::hex << auction->bidder;
-        msgAuctionSalePendingBody << std::dec << ":" << auction->bid << ":" << auction->buyout;
-        msgAuctionSalePendingBody << ":" << auction->deposit << ":" << auctionCut << ":0:";
-        msgAuctionSalePendingBody << secsToTimeBitFields(distrTime);
-
-        sLog.outDebug("AuctionSalePending body string : %s", msgAuctionSalePendingBody.str().c_str());
-
-        uint32 itemTextId = CreateItemText( msgAuctionSalePendingBody.str() );
-
-        WorldSession::SendMailTo(owner, MAIL_AUCTION, MAIL_STATIONERY_AUCTION, auction->location, auction->owner, msgAuctionSalePendingSubject.str(), itemTextId, NULL, 0, 0, MAIL_CHECK_MASK_AUCTION);
-    }
-}
-
-//call this method to send mail to auction owner, when auction is successful, it does not clear ram
-void ObjectMgr::SendAuctionSuccessfulMail( AuctionEntry * auction )
-{
-    uint64 owner_guid = MAKE_NEW_GUID(auction->owner, 0, HIGHGUID_PLAYER);
-    Player *owner = GetPlayer(owner_guid);
-
-    uint32 owner_accId = 0;
-    if(!owner)
-        owner_accId = GetPlayerAccountIdByGUID(owner_guid);
-
-    // owner exist
-    if(owner || owner_accId)
-    {
-        std::ostringstream msgAuctionSuccessfulSubject;
-        msgAuctionSuccessfulSubject << auction->item_template << ":0:" << AUCTION_SUCCESSFUL;
-
-        std::ostringstream auctionSuccessfulBody;
-        uint32 auctionCut = GetAuctionCut(auction->location, auction->bid);
-
-        auctionSuccessfulBody.width(16);
-        auctionSuccessfulBody << std::right << std::hex << auction->bidder;
-        auctionSuccessfulBody << std::dec << ":" << auction->bid << ":" << auction->buyout;
-        auctionSuccessfulBody << ":" << auction->deposit << ":" << auctionCut;
-
-        sLog.outDebug("AuctionSuccessful body string : %s", auctionSuccessfulBody.str().c_str());
-
-        uint32 itemTextId = CreateItemText( auctionSuccessfulBody.str() );
-
-        uint32 profit = auction->bid + auction->deposit - auctionCut;
-
-        if (owner)
-        {
-            //send auction owner notification, bidder must be current!
-            owner->GetSession()->SendAuctionOwnerNotification( auction );
-        }
-
-        WorldSession::SendMailTo(owner, MAIL_AUCTION, MAIL_STATIONERY_AUCTION, auction->location, auction->owner, msgAuctionSuccessfulSubject.str(), itemTextId, NULL, profit, 0, MAIL_CHECK_MASK_AUCTION, HOUR);
-    }
-}
-
-//does not clear ram
-void ObjectMgr::SendAuctionExpiredMail( AuctionEntry * auction )
-{                                                           //return an item in auction to its owner by mail
-    Item *pItem = GetAItem(auction->item_guidlow);
-    if(!pItem)
-    {
-        sLog.outError("Auction item (GUID: %u) not found, and lost.",auction->item_guidlow);
-        return;
-    }
-
-    uint64 owner_guid = MAKE_NEW_GUID(auction->owner, 0, HIGHGUID_PLAYER);
-    Player *owner = GetPlayer(owner_guid);
-
-    uint32 owner_accId = 0;
-    if(!owner)
-        owner_accId = GetPlayerAccountIdByGUID(owner_guid);
-
-    // owner exist
-    if(owner || owner_accId)
-    {
-        std::ostringstream subject;
-        subject << auction->item_template << ":0:" << AUCTION_EXPIRED;
-
-        if ( owner )
-            owner->GetSession()->SendAuctionOwnerNotification( auction );
-        else
-            RemoveAItem(pItem->GetGUIDLow());               // we have to remove the item, before we delete it !!
-
-        MailItemsInfo mi;
-        mi.AddItem(auction->item_guidlow, auction->item_template, pItem);
-
-        // will delete item or place to receiver mail list
-        WorldSession::SendMailTo(owner, MAIL_AUCTION, MAIL_STATIONERY_AUCTION, auction->location, GUID_LOPART(owner_guid), subject.str(), 0, &mi, 0, 0, MAIL_CHECK_MASK_NONE);
-    }
-    // owner not found
-    else
-    {
-        CharacterDatabase.PExecute("DELETE FROM item_instance WHERE guid='%u'",pItem->GetGUIDLow());
-        RemoveAItem(pItem->GetGUIDLow());                   // we have to remove the item, before we delete it !!
-        delete pItem;
-    }
+    mArenaTeamMap.erase(Id);
 }
 
 CreatureInfo const* ObjectMgr::GetCreatureTemplate(uint32 id)
@@ -647,6 +393,57 @@ void ObjectMgr::LoadNpcOptionLocales()
 
     sLog.outString();
     sLog.outString( ">> Loaded %u npc_option locale strings", mNpcOptionLocaleMap.size() );
+}
+
+void ObjectMgr::LoadPointOfInterestLocales()
+{
+    mPointOfInterestLocaleMap.clear();                              // need for reload case
+
+    QueryResult *result = WorldDatabase.Query("SELECT entry,icon_name_loc1,icon_name_loc2,icon_name_loc3,icon_name_loc4,icon_name_loc5,icon_name_loc6,icon_name_loc7,icon_name_loc8 FROM locales_points_of_interest");
+
+    if(!result)
+    {
+        barGoLink bar(1);
+
+        bar.step();
+
+        sLog.outString("");
+        sLog.outString(">> Loaded 0 points_of_interest locale strings. DB table `locales_points_of_interest` is empty.");
+        return;
+    }
+
+    barGoLink bar(result->GetRowCount());
+
+    do
+    {
+        Field *fields = result->Fetch();
+        bar.step();
+
+        uint32 entry = fields[0].GetUInt32();
+
+        PointOfInterestLocale& data = mPointOfInterestLocaleMap[entry];
+
+        for(int i = 1; i < MAX_LOCALE; ++i)
+        {
+            std::string str = fields[i].GetCppString();
+            if(str.empty())
+                continue;
+
+            int idx = GetOrNewIndexForLocale(LocaleConstant(i));
+            if(idx >= 0)
+            {
+                if(data.IconName.size() <= idx)
+                    data.IconName.resize(idx+1);
+
+                data.IconName[idx] = str;
+            }
+        }
+    } while (result->NextRow());
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u points_of_interest locale strings", mPointOfInterestLocaleMap.size() );
 }
 
 struct SQLCreatureLoader : public SQLStorageLoaderBase<SQLCreatureLoader>
@@ -1052,9 +849,10 @@ void ObjectMgr::LoadCreatures()
     QueryResult *result = WorldDatabase.Query("SELECT creature.guid, id, map, modelid,"
     //   4             5           6           7           8            9              10         11
         "equipment_id, position_x, position_y, position_z, orientation, spawntimesecs, spawndist, currentwaypoint,"
-    //   12         13       14          15            16         17         18
-        "curhealth, curmana, DeathState, MovementType, spawnMask, phaseMask, event "
-        "FROM creature LEFT OUTER JOIN game_event_creature ON creature.guid = game_event_creature.guid");
+    //   12         13       14          15            16         17         18     19
+        "curhealth, curmana, DeathState, MovementType, spawnMask, phaseMask, event, pool_entry "
+        "FROM creature LEFT OUTER JOIN game_event_creature ON creature.guid = game_event_creature.guid "
+        "LEFT OUTER JOIN pool_creature ON creature.guid = pool_creature.guid");
 
     if(!result)
     {
@@ -1081,11 +879,19 @@ void ObjectMgr::LoadCreatures()
         Field *fields = result->Fetch();
         bar.step();
 
-        uint32 guid = fields[0].GetUInt32();
+        uint32 guid         = fields[ 0].GetUInt32();
+        uint32 entry        = fields[ 1].GetUInt32();
+
+        CreatureInfo const* cInfo = GetCreatureTemplate(entry);
+        if(!cInfo)
+        {
+            sLog.outErrorDb("Table `creature` has creature (GUID: %u) with non existing creature entry %u, skipped.", guid, entry);
+            continue;
+        }
 
         CreatureData& data = mCreatureDataMap[guid];
 
-        data.id             = fields[ 1].GetUInt32();
+        data.id             = entry;
         data.mapid          = fields[ 2].GetUInt32();
         data.displayid      = fields[ 3].GetUInt32();
         data.equipmentId    = fields[ 4].GetUInt32();
@@ -1103,13 +909,7 @@ void ObjectMgr::LoadCreatures()
         data.spawnMask      = fields[16].GetUInt8();
         data.phaseMask      = fields[17].GetUInt16();
         int16 gameEvent     = fields[18].GetInt16();
-
-        CreatureInfo const* cInfo = GetCreatureTemplate(data.id);
-        if(!cInfo)
-        {
-            sLog.outErrorDb("Table `creature` have creature (GUID: %u) with not existed creature entry %u, skipped.",guid,data.id );
-            continue;
-        }
+        int16 PoolId        = fields[19].GetInt16();
 
         if(heroicCreatures.find(data.id)!=heroicCreatures.end())
         {
@@ -1194,7 +994,7 @@ void ObjectMgr::LoadCreatures()
             }
         }
 
-        if (gameEvent==0)                                   // if not this is to be managed by GameEvent System
+        if (gameEvent==0 && PoolId==0)                      // if not this is to be managed by GameEvent System or Pool system
             AddCreatureToGrid(guid, &data);
         ++count;
 
@@ -1244,9 +1044,10 @@ void ObjectMgr::LoadGameobjects()
 
     //                                                0                1   2    3           4           5           6
     QueryResult *result = WorldDatabase.Query("SELECT gameobject.guid, id, map, position_x, position_y, position_z, orientation,"
-    //   7          8          9          10         11             12            13     14         15         16
-        "rotation0, rotation1, rotation2, rotation3, spawntimesecs, animprogress, state, spawnMask, phaseMask, event "
-        "FROM gameobject LEFT OUTER JOIN game_event_gameobject ON gameobject.guid = game_event_gameobject.guid");
+    //   7          8          9          10         11             12            13     14         15         16     17
+        "rotation0, rotation1, rotation2, rotation3, spawntimesecs, animprogress, state, spawnMask, phaseMask, event, pool_entry "
+        "FROM gameobject LEFT OUTER JOIN game_event_gameobject ON gameobject.guid = game_event_gameobject.guid "
+        "LEFT OUTER JOIN pool_gameobject ON gameobject.guid = pool_gameobject.guid");
 
     if(!result)
     {
@@ -1266,11 +1067,19 @@ void ObjectMgr::LoadGameobjects()
         Field *fields = result->Fetch();
         bar.step();
 
-        uint32 guid = fields[0].GetUInt32();
+        uint32 guid         = fields[ 0].GetUInt32();
+        uint32 entry        = fields[ 1].GetUInt32();
+
+        GameObjectInfo const* gInfo = GetGameObjectInfo(entry);
+        if(!gInfo)
+        {
+            sLog.outErrorDb("Table `gameobject` has gameobject (GUID: %u) with non existing gameobject entry %u, skipped.", guid, entry);
+            continue;
+        }
 
         GameObjectData& data = mGameObjectDataMap[guid];
 
-        data.id             = fields[ 1].GetUInt32();
+        data.id             = entry;
         data.mapid          = fields[ 2].GetUInt32();
         data.posX           = fields[ 3].GetFloat();
         data.posY           = fields[ 4].GetFloat();
@@ -1286,13 +1095,7 @@ void ObjectMgr::LoadGameobjects()
         data.spawnMask      = fields[14].GetUInt8();
         data.phaseMask      = fields[15].GetUInt16();
         int16 gameEvent     = fields[16].GetInt16();
-
-        GameObjectInfo const* gInfo = GetGameObjectInfo(data.id);
-        if(!gInfo)
-        {
-            sLog.outErrorDb("Table `gameobject` have gameobject (GUID: %u) with not existed gameobject entry %u, skipped.",guid,data.id );
-            continue;
-        }
+        int16 PoolId        = fields[17].GetInt16();
 
         if(data.phaseMask==0)
         {
@@ -1300,7 +1103,7 @@ void ObjectMgr::LoadGameobjects()
             data.phaseMask = 1;
         }
 
-        if (gameEvent==0)                                   // if not this is to be managed by GameEvent System
+        if (gameEvent==0 && PoolId==0)                      // if not this is to be managed by GameEvent System or Pool system
             AddGameobjectToGrid(guid, &data);
         ++count;
 
@@ -1506,95 +1309,6 @@ uint32 ObjectMgr::GetPlayerAccountIdByPlayerName(const std::string& name) const
     }
 
     return 0;
-}
-
-void ObjectMgr::LoadAuctions()
-{
-    QueryResult *result = CharacterDatabase.Query("SELECT COUNT(*) FROM auctionhouse");
-    if( !result )
-    {
-        barGoLink bar(1);
-        bar.step();
-        sLog.outString("");
-        sLog.outString(">> Loaded 0 auctions. DB table `auctionhouse` is empty.");
-        return;
-    }
-
-    Field *fields = result->Fetch();
-    uint32 AuctionCount=fields[0].GetUInt32();
-    delete result;
-
-    if(!AuctionCount)
-    {
-        barGoLink bar(1);
-        bar.step();
-        sLog.outString("");
-        sLog.outString(">> Loaded 0 auctions. DB table `auctionhouse` is empty.");
-        return;
-    }
-
-    result = CharacterDatabase.Query( "SELECT id,auctioneerguid,itemguid,item_template,itemowner,buyoutprice,time,buyguid,lastbid,startbid,deposit,location FROM auctionhouse" );
-    if( !result )
-    {
-        barGoLink bar(1);
-        bar.step();
-        sLog.outString("");
-        sLog.outString(">> Loaded 0 auctions. DB table `auctionhouse` is empty.");
-        return;
-    }
-
-    barGoLink bar( AuctionCount );
-
-    AuctionEntry *aItem;
-
-    do
-    {
-        fields = result->Fetch();
-
-        bar.step();
-
-        aItem = new AuctionEntry;
-        aItem->Id = fields[0].GetUInt32();
-        aItem->auctioneer = fields[1].GetUInt32();
-        aItem->item_guidlow = fields[2].GetUInt32();
-        aItem->item_template = fields[3].GetUInt32();
-        aItem->owner = fields[4].GetUInt32();
-        aItem->buyout = fields[5].GetUInt32();
-        aItem->time = fields[6].GetUInt32();
-        aItem->bidder = fields[7].GetUInt32();
-        aItem->bid = fields[8].GetUInt32();
-        aItem->startbid = fields[9].GetUInt32();
-        aItem->deposit = fields[10].GetUInt32();
-
-        uint32 loc = fields[11].GetUInt8();
-        if(!IsValidAuctionLocation(loc))
-        {
-            CharacterDatabase.PExecute("DELETE FROM auctionhouse WHERE id = '%u'",aItem->Id);
-            sLog.outError("Auction %u has wrong auction location (%u)", aItem->Id, loc);
-            delete aItem;
-            continue;
-        }
-        aItem->location = AuctionLocation(loc);
-
-        // check if sold item exists for guid
-        // and item_template in fact (GetAItem will fail if problematic in result check in ObjectMgr::LoadAuctionItems)
-        if ( !GetAItem( aItem->item_guidlow ) )
-        {
-            CharacterDatabase.PExecute("DELETE FROM auctionhouse WHERE id = '%u'",aItem->Id);
-            sLog.outError("Auction %u has not a existing item : %u", aItem->Id, aItem->item_guidlow);
-            delete aItem;
-            continue;
-        }
-
-        if(aItem->location)
-
-        GetAuctionsMap( aItem->location )->AddAuction(aItem);
-
-    } while (result->NextRow());
-    delete result;
-
-    sLog.outString();
-    sLog.outString( ">> Loaded %u auctions", AuctionCount );
 }
 
 void ObjectMgr::LoadItemLocales()
@@ -2019,60 +1733,13 @@ void ObjectMgr::LoadItemPrototypes()
             sLog.outErrorDb("Item (Entry: %u) has wrong FoodType value (%u)",i,proto->FoodType);
             const_cast<ItemPrototype*>(proto)->FoodType = 0;
         }
-    }
-}
 
-void ObjectMgr::LoadAuctionItems()
-{
-    // data needs to be at first place for Item::LoadFromDB
-    QueryResult *result = CharacterDatabase.Query( "SELECT data,itemguid,item_template FROM auctionhouse JOIN item_instance ON itemguid = guid" );
-
-    if( !result )
-    {
-        barGoLink bar(1);
-        bar.step();
-        sLog.outString("");
-        sLog.outString(">> Loaded 0 auction items");
-        return;
-    }
-
-    barGoLink bar( result->GetRowCount() );
-
-    uint32 count = 0;
-
-    Field *fields;
-    do
-    {
-        bar.step();
-
-        fields = result->Fetch();
-        uint32 item_guid        = fields[1].GetUInt32();
-        uint32 item_template    = fields[2].GetUInt32();
-
-        ItemPrototype const *proto = GetItemPrototype(item_template);
-
-        if(!proto)
+        if(proto->ItemLimitCategory && !sItemLimitCategoryStore.LookupEntry(proto->ItemLimitCategory))
         {
-            sLog.outError( "ObjectMgr::LoadAuctionItems: Unknown item (GUID: %u id: #%u) in auction, skipped.", item_guid,item_template);
-            continue;
+            sLog.outErrorDb("Item (Entry: %u) has wrong LimitCategory value (%u)",i,proto->ItemLimitCategory);
+            const_cast<ItemPrototype*>(proto)->ItemLimitCategory = 0;
         }
-
-        Item *item = NewItemOrBag(proto);
-
-        if(!item->LoadFromDB(item_guid,0, result))
-        {
-            delete item;
-            continue;
-        }
-        AddAItem(item);
-
-        ++count;
     }
-    while( result->NextRow() );
-    delete result;
-
-    sLog.outString();
-    sLog.outString( ">> Loaded %u auction items", count );
 }
 
 void ObjectMgr::LoadPetLevelInfo()
@@ -4126,12 +3793,33 @@ void ObjectMgr::LoadScripts(ScriptMapMap& scripts, char const* tablename)
             }
 
             case SCRIPT_COMMAND_REMOVE_AURA:
+            {
+                if(!sSpellStore.LookupEntry(tmp.datalong))
+                {
+                    sLog.outErrorDb("Table `%s` using non-existent spell (id: %u) in SCRIPT_COMMAND_REMOVE_AURA or SCRIPT_COMMAND_CAST_SPELL for script id %u",
+                        tablename,tmp.datalong,tmp.id);
+                    continue;
+                }
+                if(tmp.datalong2 & ~0x1)                    // 1 bits (0,1)
+                {
+                    sLog.outErrorDb("Table `%s` using unknown flags in datalong2 (%u)i n SCRIPT_COMMAND_CAST_SPELL for script id %u",
+                        tablename,tmp.datalong2,tmp.id);
+                    continue;
+                }
+                break;
+            }
             case SCRIPT_COMMAND_CAST_SPELL:
             {
                 if(!sSpellStore.LookupEntry(tmp.datalong))
                 {
                     sLog.outErrorDb("Table `%s` using non-existent spell (id: %u) in SCRIPT_COMMAND_REMOVE_AURA or SCRIPT_COMMAND_CAST_SPELL for script id %u",
                         tablename,tmp.datalong,tmp.id);
+                    continue;
+                }
+                if(tmp.datalong2 & ~0x3)                    // 2 bits
+                {
+                    sLog.outErrorDb("Table `%s` using unknown flags in datalong2 (%u)i n SCRIPT_COMMAND_CAST_SPELL for script id %u",
+                        tablename,tmp.datalong2,tmp.id);
                     continue;
                 }
                 break;
@@ -4440,7 +4128,7 @@ void ObjectMgr::LoadInstanceTemplate()
         // entry->resetTimeHeroic store reset time for both heroic mode instance (raid and non-raid)
         // entry->resetTimeRaid   store reset time for normal raid only
         // for current state  entry->resetTimeRaid == entry->resetTimeHeroic in case raid instances with heroic mode.
-        // but at some point wee need implement reset time dependen from raid insatance mode
+        // but at some point wee need implement reset time dependent from raid instance mode
         if(temp->reset_delay == 0)
         {
             // use defaults from the DBC
@@ -4463,27 +4151,16 @@ void ObjectMgr::LoadInstanceTemplate()
     sLog.outString();
 }
 
-void ObjectMgr::AddGossipText(GossipText *pGText)
+GossipText const *ObjectMgr::GetGossipText(uint32 Text_ID) const
 {
-    ASSERT( pGText->Text_ID );
-    ASSERT( mGossipText.find(pGText->Text_ID) == mGossipText.end() );
-    mGossipText[pGText->Text_ID] = pGText;
-}
-
-GossipText *ObjectMgr::GetGossipText(uint32 Text_ID)
-{
-    GossipTextMap::const_iterator itr;
-    for (itr = mGossipText.begin(); itr != mGossipText.end(); ++itr)
-    {
-        if(itr->second->Text_ID == Text_ID)
-            return itr->second;
-    }
+    GossipTextMap::const_iterator itr = mGossipText.find(Text_ID);
+    if(itr != mGossipText.end())
+        return &itr->second;
     return NULL;
 }
 
 void ObjectMgr::LoadGossipText()
 {
-    GossipText *pGText;
     QueryResult *result = WorldDatabase.Query( "SELECT * FROM npc_text" );
 
     int count = 0;
@@ -4510,30 +4187,29 @@ void ObjectMgr::LoadGossipText()
 
         bar.step();
 
-        pGText = new GossipText;
-        pGText->Text_ID    = fields[cic++].GetUInt32();
+        uint32 Text_ID    = fields[cic++].GetUInt32();
+        if(!Text_ID)
+        {
+            sLog.outErrorDb("Table `npc_text` has record wit reserved id 0, ignore.");
+            continue;
+        }
+
+        GossipText& gText = mGossipText[Text_ID];
 
         for (int i=0; i< 8; i++)
         {
-            pGText->Options[i].Text_0           = fields[cic++].GetCppString();
-            pGText->Options[i].Text_1           = fields[cic++].GetCppString();
+            gText.Options[i].Text_0           = fields[cic++].GetCppString();
+            gText.Options[i].Text_1           = fields[cic++].GetCppString();
 
-            pGText->Options[i].Language         = fields[cic++].GetUInt32();
-            pGText->Options[i].Probability      = fields[cic++].GetFloat();
+            gText.Options[i].Language         = fields[cic++].GetUInt32();
+            gText.Options[i].Probability      = fields[cic++].GetFloat();
 
-            pGText->Options[i].Emotes[0]._Delay  = fields[cic++].GetUInt32();
-            pGText->Options[i].Emotes[0]._Emote  = fields[cic++].GetUInt32();
-
-            pGText->Options[i].Emotes[1]._Delay  = fields[cic++].GetUInt32();
-            pGText->Options[i].Emotes[1]._Emote  = fields[cic++].GetUInt32();
-
-            pGText->Options[i].Emotes[2]._Delay  = fields[cic++].GetUInt32();
-            pGText->Options[i].Emotes[2]._Emote  = fields[cic++].GetUInt32();
+            for(int j=0; j < 3; ++j)
+            {
+                gText.Options[i].Emotes[j]._Delay  = fields[cic++].GetUInt32();
+                gText.Options[i].Emotes[j]._Emote  = fields[cic++].GetUInt32();
+            }
         }
-
-        if ( !pGText->Text_ID ) continue;
-        AddGossipText( pGText );
-
     } while( result->NextRow() );
 
     sLog.outString();
@@ -5480,16 +5156,6 @@ uint32 ObjectMgr::GenerateArenaTeamId()
     return m_arenaTeamId++;
 }
 
-uint32 ObjectMgr::GenerateGuildId()
-{
-    if(m_guildId>=0xFFFFFFFE)
-    {
-        sLog.outError("Guild ids overflow!! Can't continue, shutting down server. ");
-        World::StopNow(ERROR_EXIT_CODE);
-    }
-    return m_guildId++;
-}
-
 uint32 ObjectMgr::GenerateAuctionID()
 {
     if(m_auctionid>=0xFFFFFFFE)
@@ -5498,6 +5164,16 @@ uint32 ObjectMgr::GenerateAuctionID()
         World::StopNow(ERROR_EXIT_CODE);
     }
     return m_auctionid++;
+}
+
+uint32 ObjectMgr::GenerateGuildId()
+{
+    if(m_guildId>=0xFFFFFFFE)
+    {
+        sLog.outError("Guild ids overflow!! Can't continue, shutting down server. ");
+        World::StopNow(ERROR_EXIT_CODE);
+    }
+    return m_guildId++;
 }
 
 uint32 ObjectMgr::GenerateMailID()
@@ -6115,6 +5791,58 @@ void ObjectMgr::LoadReputationOnKill()
 
     sLog.outString();
     sLog.outString(">> Loaded %u creature award reputation definitions", count);
+}
+
+void ObjectMgr::LoadPointsOfInterest()
+{
+    uint32 count = 0;
+
+    //                                                0      1  2  3      4     5
+    QueryResult *result = WorldDatabase.Query("SELECT entry, x, y, icon, flags, data, icon_name FROM points_of_interest");
+
+    if(!result)
+    {
+        barGoLink bar(1);
+
+        bar.step();
+
+        sLog.outString();
+        sLog.outErrorDb(">> Loaded 0 Points of Interest definitions. DB table `points_of_interest` is empty.");
+        return;
+    }
+
+    barGoLink bar(result->GetRowCount());
+
+    do
+    {
+        Field *fields = result->Fetch();
+        bar.step();
+
+        uint32 point_id = fields[0].GetUInt32();
+
+        PointOfInterest POI;
+        POI.x                    = fields[1].GetFloat();
+        POI.y                    = fields[2].GetFloat();
+        POI.icon                 = fields[3].GetUInt32();
+        POI.flags                = fields[4].GetUInt32();
+        POI.data                 = fields[5].GetUInt32();
+        POI.icon_name            = fields[6].GetCppString();
+
+        if(!MaNGOS::IsValidMapCoord(POI.x,POI.y))
+        {
+            sLog.outErrorDb("Table `points_of_interest` (Entry: %u) have invalid coordinates (X: %f Y: %f), ignored.",point_id,POI.x,POI.y);
+            continue;
+        }
+
+        mPointsOfInterest[point_id] = POI;
+
+        ++count;
+    } while (result->NextRow());
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString(">> Loaded %u Points of Interest definitions", count);
 }
 
 void ObjectMgr::LoadWeatherZoneChances()
@@ -6842,7 +6570,7 @@ bool PlayerCondition::Meets(Player const * player) const
         case CONDITION_ITEM:
             return player->HasItemCount(value1, value2);
         case CONDITION_ITEM_EQUIPPED:
-            return player->GetItemOrItemWithGemEquipped(value1) != NULL;
+            return player->HasItemOrGemWithIdEquipped(value1,1);
         case CONDITION_ZONEID:
             return player->GetZoneId() == value1;
         case CONDITION_REPUTATION_RANK:
@@ -7246,36 +6974,34 @@ void ObjectMgr::LoadTrainerSpell()
             continue;
         }
 
-        TrainerSpell* pTrainerSpell = new TrainerSpell();
-        pTrainerSpell->spell         = spell;
-        pTrainerSpell->spellCost     = fields[2].GetUInt32();
-        pTrainerSpell->reqSkill      = fields[3].GetUInt32();
-        pTrainerSpell->reqSkillValue = fields[4].GetUInt32();
-        pTrainerSpell->reqLevel      = fields[5].GetUInt32();
+        TrainerSpellData& data = m_mCacheTrainerSpellMap[entry];
 
-        if(!pTrainerSpell->reqLevel)
-            pTrainerSpell->reqLevel = spellinfo->spellLevel;
+        TrainerSpell& trainerSpell = data.spellList[spell];
+        trainerSpell.spell         = spell;
+        trainerSpell.spellCost     = fields[2].GetUInt32();
+        trainerSpell.reqSkill      = fields[3].GetUInt32();
+        trainerSpell.reqSkillValue = fields[4].GetUInt32();
+        trainerSpell.reqLevel      = fields[5].GetUInt32();
+
+        if(!trainerSpell.reqLevel)
+            trainerSpell.reqLevel = spellinfo->spellLevel;
 
         // calculate learned spell for profession case when stored cast-spell
-        pTrainerSpell->learnedSpell = spell;
+        trainerSpell.learnedSpell = spell;
         for(int i = 0; i <3; ++i)
         {
-            if(spellinfo->Effect[i]!=SPELL_EFFECT_LEARN_SPELL)
+            if(spellinfo->Effect[i] != SPELL_EFFECT_LEARN_SPELL)
                 continue;
-
             if(SpellMgr::IsProfessionOrRidingSpell(spellinfo->EffectTriggerSpell[i]))
             {
-                pTrainerSpell->learnedSpell = spellinfo->EffectTriggerSpell[i];
+                trainerSpell.learnedSpell = spellinfo->EffectTriggerSpell[i];
                 break;
             }
         }
 
-        TrainerSpellData& data = m_mCacheTrainerSpellMap[entry];
-
-        if(SpellMgr::IsProfessionSpell(spell))
+        if(SpellMgr::IsProfessionSpell(trainerSpell.learnedSpell))
             data.trainerType = 2;
 
-        data.spellList.push_back(pTrainerSpell);
         ++count;
 
     } while (result->NextRow());
@@ -7664,4 +7390,14 @@ uint32 MANGOS_DLL_SPEC GetScriptId(const char *name)
 ObjectMgr::ScriptNameMap & GetScriptNames()
 {
     return objmgr.GetScriptNames();
+}
+
+CreatureInfo const* GetCreatureTemplateStore(uint32 entry)
+{
+    return sCreatureStorage.LookupEntry<CreatureInfo>(entry);
+}
+
+Quest const* GetQuestTemplateStore(uint32 entry)
+{
+    return objmgr.GetQuestTemplate(entry);
 }

@@ -36,6 +36,7 @@
 #include "World.h"
 #include "AccountMgr.h"
 #include "AchievementMgr.h"
+#include "AuctionHouseMgr.h"
 #include "ObjectMgr.h"
 #include "SpellMgr.h"
 #include "Chat.h"
@@ -52,6 +53,7 @@
 #include "VMapFactory.h"
 #include "GlobalEvents.h"
 #include "GameEvent.h"
+#include "PoolHandler.h"
 #include "Database/DatabaseImpl.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
@@ -616,7 +618,7 @@ void World::LoadConfigSettings(bool reload)
     m_configs[CONFIG_ALLOW_TWO_SIDE_INTERACTION_CHANNEL] = sConfig.GetBoolDefault("AllowTwoSide.Interaction.Channel",false);
     m_configs[CONFIG_ALLOW_TWO_SIDE_INTERACTION_GROUP]   = sConfig.GetBoolDefault("AllowTwoSide.Interaction.Group",false);
     m_configs[CONFIG_ALLOW_TWO_SIDE_INTERACTION_GUILD]   = sConfig.GetBoolDefault("AllowTwoSide.Interaction.Guild",false);
-    m_configs[CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION]   = sConfig.GetBoolDefault("AllowTwoSide.Interaction.Auction",false);
+    m_configs[CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION] = sConfig.GetBoolDefault("AllowTwoSide.Interaction.Auction",false);
     m_configs[CONFIG_ALLOW_TWO_SIDE_INTERACTION_MAIL]    = sConfig.GetBoolDefault("AllowTwoSide.Interaction.Mail",false);
     m_configs[CONFIG_ALLOW_TWO_SIDE_WHO_LIST] = sConfig.GetBoolDefault("AllowTwoSide.WhoList", false);
     m_configs[CONFIG_ALLOW_TWO_SIDE_ADD_FRIEND] = sConfig.GetBoolDefault("AllowTwoSide.AddFriend", false);
@@ -1093,6 +1095,7 @@ void World::SetInitialWorldSettings()
     objmgr.LoadNpcTextLocales();
     objmgr.LoadPageTextLocales();
     objmgr.LoadNpcOptionLocales();
+    objmgr.LoadPointOfInterestLocales();
     objmgr.SetDBCLocaleIndex(GetDefaultDbcLocale());        // Get once for all the locale index of DBC language (console/broadcasts)
     sLog.outString( ">>> Localization strings loaded" );
     sLog.outString();
@@ -1151,6 +1154,9 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Creature Reputation OnKill Data..." );
     objmgr.LoadReputationOnKill();
 
+    sLog.outString( "Loading Points Of Interest Data..." );
+    objmgr.LoadPointsOfInterest();
+
     sLog.outString( "Loading Pet Create Spells..." );
     objmgr.LoadPetCreateSpells();
 
@@ -1171,6 +1177,9 @@ void World::SetInitialWorldSettings()
 
     sLog.outString( "Loading Gameobject Respawn Data..." ); // must be after PackInstances()
     objmgr.LoadGameobjectRespawnTimes();
+
+    sLog.outString( "Loading Objects Pooling Data...");
+    poolhandler.LoadFromDB();
 
     sLog.outString( "Loading Game Event Data...");
     sLog.outString();
@@ -1265,8 +1274,8 @@ void World::SetInitialWorldSettings()
     ///- Load dynamic data tables from the database
     sLog.outString( "Loading Auctions..." );
     sLog.outString();
-    objmgr.LoadAuctionItems();
-    objmgr.LoadAuctions();
+    auctionmgr.LoadAuctionItems();
+    auctionmgr.LoadAuctions();
     sLog.outString( ">>> Auctions loaded" );
     sLog.outString();
 
@@ -1388,6 +1397,9 @@ void World::SetInitialWorldSettings()
     sLog.outString("Calculate next daily quest reset time..." );
     InitDailyQuestResetTime();
 
+    sLog.outString("Starting objects Pooling system..." );
+    poolhandler.Initialize();
+
     sLog.outString("Starting Game Event system..." );
     uint32 nextGameEvent = gameeventmgr.Initialize();
     m_timers[WUPDATE_EVENTS].SetInterval(nextGameEvent);    //depend on next event
@@ -1471,54 +1483,8 @@ void World::Update(uint32 diff)
             objmgr.ReturnOrDeleteOldMails(true);
         }
 
-        AuctionHouseObject* AuctionMap;
-        for (int i = 0; i < 3; i++)
-        {
-            switch (i)
-            {
-                case 0:
-                    AuctionMap = objmgr.GetAuctionsMap(AUCTION_HORDE);
-                    break;
-                case 1:
-                    AuctionMap = objmgr.GetAuctionsMap(AUCTION_ALLIANCE);
-                    break;
-                case 2:
-                    AuctionMap = objmgr.GetAuctionsMap(AUCTION_NEUTRAL);
-                    break;
-            }
-
-            ///- Handle expired auctions
-            AuctionHouseObject::AuctionEntryMap::iterator itr,next;
-            for (itr = AuctionMap->GetAuctionsBegin(); itr != AuctionMap->GetAuctionsEnd();itr = next)
-            {
-                next = itr;
-                ++next;
-                if (m_gameTime > (itr->second->time))
-                {
-                    ///- Either cancel the auction if there was no bidder
-                    if (itr->second->bidder == 0)
-                    {
-                        objmgr.SendAuctionExpiredMail( itr->second );
-                    }
-                    ///- Or perform the transaction
-                    else
-                    {
-                        //we should send an "item sold" message if the seller is online
-                        //we send the item to the winner
-                        //we send the money to the seller
-                        objmgr.SendAuctionSuccessfulMail( itr->second );
-                        objmgr.SendAuctionWonMail( itr->second );
-                    }
-
-                    ///- In any case clear the auction
-                    //No SQL injection (Id is integer)
-                    CharacterDatabase.PExecute("DELETE FROM auctionhouse WHERE id = '%u'",itr->second->Id);
-                    objmgr.RemoveAItem(itr->second->item_guidlow);
-                    delete itr->second;
-                    AuctionMap->RemoveAuction(itr->first);
-                }
-            }
-        }
+        ///- Handle expired auctions
+        auctionmgr.Update();
     }
 
     /// <li> Handle session updates when the timer has passed
@@ -2223,24 +2189,40 @@ void World::ScriptsProcess()
                     break;
                 }
 
-                Object* cmdTarget = step.script->datalong2 ? source : target;
+                Object* cmdTarget = step.script->datalong2 & 0x01 ? source : target;
 
                 if(!cmdTarget)
                 {
-                    sLog.outError("SCRIPT_COMMAND_CAST_SPELL call for NULL %s.",step.script->datalong2 ? "source" : "target");
+                    sLog.outError("SCRIPT_COMMAND_CAST_SPELL call for NULL %s.",step.script->datalong2 & 0x01 ? "source" : "target");
                     break;
                 }
 
                 if(!cmdTarget->isType(TYPEMASK_UNIT))
                 {
-                    sLog.outError("SCRIPT_COMMAND_CAST_SPELL %s isn't unit (TypeId: %u), skipping.",step.script->datalong2 ? "source" : "target",cmdTarget->GetTypeId());
+                    sLog.outError("SCRIPT_COMMAND_CAST_SPELL %s isn't unit (TypeId: %u), skipping.",step.script->datalong2 & 0x01 ? "source" : "target",cmdTarget->GetTypeId());
                     break;
                 }
 
                 Unit* spellTarget = (Unit*)cmdTarget;
 
+                Object* cmdSource = step.script->datalong2 & 0x02 ? target : source;
+
+                if(!cmdSource)
+                {
+                    sLog.outError("SCRIPT_COMMAND_CAST_SPELL call for NULL %s.",step.script->datalong2 & 0x02 ? "target" : "source");
+                    break;
+                }
+
+                if(!cmdSource->isType(TYPEMASK_UNIT))
+                {
+                    sLog.outError("SCRIPT_COMMAND_CAST_SPELL %s isn't unit (TypeId: %u), skipping.",step.script->datalong2 & 0x02 ? "target" : "source", cmdSource->GetTypeId());
+                    break;
+                }
+
+                Unit* spellSource = (Unit*)cmdSource;
+
                 //TODO: when GO cast implemented, code below must be updated accordingly to also allow GO spell cast
-                ((Unit*)source)->CastSpell(spellTarget,step.script->datalong,false);
+                spellSource->CastSpell(spellTarget,step.script->datalong,false);
 
                 break;
             }

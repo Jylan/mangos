@@ -341,6 +341,8 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleUnused,                                    //288 not used by any spells (3.09) except 1 test spell.
 };
 
+static AuraType const frozenAuraTypes[] = { SPELL_AURA_MOD_ROOT, SPELL_AURA_MOD_STUN, SPELL_AURA_NONE };
+
 Aura::Aura(SpellEntry const* spellproto, uint32 eff, int32 *currentBasePoints, Unit *target, Unit *caster, Item* castItem) :
 m_spellmod(NULL), m_caster_guid(0), m_castItemGuid(castItem?castItem->GetGUID():0), m_target(target),
 m_timeCla(1000), m_periodicTimer(0), m_removeMode(AURA_REMOVE_BY_DEFAULT), m_AuraDRGroup(DIMINISHING_NONE),
@@ -574,7 +576,7 @@ void Aura::Update(uint32 diff)
             {
                 Powers powertype = Powers(m_spellProto->powerType);
                 int32 manaPerSecond = m_spellProto->manaPerSecond + m_spellProto->manaPerSecondPerLevel * caster->getLevel();
-                m_timeCla = 1000;
+                m_timeCla = 1*IN_MILISECONDS;
                 if (manaPerSecond)
                 {
                     if(powertype==POWER_HEALTH)
@@ -933,6 +935,16 @@ void Aura::_AddAura()
 
     Unit* caster = GetCaster();
 
+    // set infinity cooldown state for spells
+    if(caster && caster->GetTypeId() == TYPEID_PLAYER)
+    {
+        if (m_spellProto->Attributes & SPELL_ATTR_DISABLED_WHILE_ACTIVE)
+        {
+            Item* castItem = m_castItemGuid ? ((Player*)caster)->GetItemByGuid(m_castItemGuid) : NULL;
+            ((Player*)caster)->AddSpellAndCategoryCooldowns(m_spellProto,castItem ? castItem->GetEntry() : 0, NULL,true);
+        }
+    }
+
     // passive auras (except totem auras) do not get placed in the slots
     // area auras with SPELL_AURA_NONE are not shown on target
     if((!m_isPassive || (caster && caster->GetTypeId() == TYPEID_UNIT && ((Creature*)caster)->isTotem())) &&
@@ -1115,6 +1127,7 @@ void Aura::_RemoveAura()
         if(caster && caster->GetTypeId() == TYPEID_PLAYER)
         {
             if ( GetSpellProto()->Attributes & SPELL_ATTR_DISABLED_WHILE_ACTIVE )
+                // note: item based cooldowns and cooldown spell mods with charges ignored (unknown existed cases)
                 ((Player*)caster)->SendCooldownEvent(GetSpellProto());
         }
     }
@@ -2105,30 +2118,29 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             return;
         }
 
-        // Waiting to Resurrect
-        if(GetId()==2584)
+        switch(GetId())
         {
-            // Waiting to resurrect spell cancel, we must remove player from resurrect queue
-            if(m_target->GetTypeId() == TYPEID_PLAYER)
-                if(BattleGround *bg = ((Player*)m_target)->GetBattleGround())
-                    bg->RemovePlayerFromResurrectQueue(m_target->GetGUID());
-            return;
-        }
-
-        // Dark Fiend
-        if(GetId()==45934)
-        {
-            // Kill target if dispelled
-            if (m_removeMode==AURA_REMOVE_BY_DISPEL)
-                m_target->DealDamage(m_target, m_target->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
-            return;
-        }
-
-        // Burning Winds
-        if(GetId()==46308)                                  // casted only at creatures at spawn
-        {
-            m_target->CastSpell(m_target,47287,true,NULL,this);
-            return;
+            case 2584:                                      // Waiting to Resurrect
+            {
+                // Waiting to resurrect spell cancel, we must remove player from resurrect queue
+                if(m_target->GetTypeId() == TYPEID_PLAYER)
+                    if(BattleGround *bg = ((Player*)m_target)->GetBattleGround())
+                        bg->RemovePlayerFromResurrectQueue(m_target->GetGUID());
+                return;
+            }
+            case 45934:                                     // Dark Fiend
+            {
+                // Kill target if dispelled
+                if (m_removeMode==AURA_REMOVE_BY_DISPEL)
+                    m_target->DealDamage(m_target, m_target->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+                return;
+            }
+            case 46308:                                     // Burning Winds
+            {
+                // casted only at creatures at spawn
+                m_target->CastSpell(m_target,47287,true,NULL,this);
+                return;
+            }
         }
 
         if (caster && m_removeMode == AURA_REMOVE_BY_DEATH)
@@ -2372,6 +2384,29 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
         else
             m_target->RemovePetAura(petSpell);
         return;
+    }
+
+    if(GetEffIndex()==0 && m_target->GetTypeId()==TYPEID_PLAYER)
+    {
+        SpellAreaForAreaMapBounds saBounds = spellmgr.GetSpellAreaForAuraMapBounds(GetId());
+        if(saBounds.first != saBounds.second)
+        {
+            uint32 zone = m_target->GetZoneId();
+            uint32 area = m_target->GetAreaId();
+
+            for(SpellAreaForAreaMap::const_iterator itr = saBounds.first; itr != saBounds.second; ++itr)
+            {
+                // some auras remove at aura remove
+                if(!itr->second->IsFitToRequirements((Player*)m_target,zone,area))
+                    m_target->RemoveAurasDueToSpell(itr->second->spellId);
+                // some auras applied at aura apply
+                else if(itr->second->autocast)
+                {
+                    if( !m_target->HasAura(itr->second->spellId,0) )
+                        m_target->CastSpell(m_target,itr->second->spellId,true);
+                }
+            }
+        }
     }
 }
 
@@ -2795,7 +2830,7 @@ void Aura::HandleAuraTransform(bool apply, bool Real)
             // for players, start regeneration after 1s (in polymorph fast regeneration case)
             // only if caster is Player (after patch 2.4.2)
             if(IS_PLAYER_GUID(GetCasterGUID()) )
-                ((Player*)m_target)->setRegenTimer(1000);
+                ((Player*)m_target)->setRegenTimer(1*IN_MILISECONDS);
 
             //dismount polymorphed target (after patch 2.4.2)
             if (m_target->IsMounted())
@@ -3315,6 +3350,10 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
 
     if (apply)
     {
+        // Frost stun aura -> freeze/unfreeze target
+        if (GetSpellSchoolMask(m_spellProto) & SPELL_SCHOOL_MASK_FROST)
+            m_target->ModifyAuraState(AURA_STATE_FROZEN, apply);
+
         m_target->addUnitState(UNIT_STAT_STUNNED);
         m_target->SetUInt64Value(UNIT_FIELD_TARGET, 0);
 
@@ -3335,6 +3374,29 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
     }
     else
     {
+        // Frost stun aura -> freeze/unfreeze target
+        if (GetSpellSchoolMask(m_spellProto) & SPELL_SCHOOL_MASK_FROST)
+        {
+            bool found_another = false;
+            for(AuraType const* itr = &frozenAuraTypes[0]; *itr != SPELL_AURA_NONE; ++itr)
+            {
+                Unit::AuraList const& auras = m_target->GetAurasByType(*itr);
+                for(Unit::AuraList::const_iterator i = auras.begin(); i != auras.end(); ++i)
+                {
+                    if( GetSpellSchoolMask((*i)->GetSpellProto()) & SPELL_SCHOOL_MASK_FROST)
+                    {
+                        found_another = true;
+                        break;
+                    }
+                }
+                if(found_another)
+                    break;
+            }
+
+            if(!found_another)
+                m_target->ModifyAuraState(AURA_STATE_FROZEN, apply);
+        }
+
         // Real remove called after current aura remove from lists, check if other similar auras active
         if(m_target->HasAuraType(SPELL_AURA_MOD_STUN))
             return;
@@ -3527,13 +3589,13 @@ void Aura::HandleAuraModRoot(bool apply, bool Real)
     if(!Real)
         return;
 
-    // Frost root aura -> freeze/unfreeze target
-    if (GetSpellSchoolMask(m_spellProto) & SPELL_SCHOOL_MASK_FROST)
-        m_target->ModifyAuraState(AURA_STATE_FROZEN, apply);
-
     uint32 apply_stat = UNIT_STAT_ROOT;
     if (apply)
     {
+        // Frost root aura -> freeze/unfreeze target
+        if (GetSpellSchoolMask(m_spellProto) & SPELL_SCHOOL_MASK_FROST)
+            m_target->ModifyAuraState(AURA_STATE_FROZEN, apply);
+
         m_target->addUnitState(UNIT_STAT_ROOT);
         m_target->SetUInt64Value (UNIT_FIELD_TARGET, 0);
 // probably wrong (this add skinable flag)
@@ -3559,6 +3621,29 @@ void Aura::HandleAuraModRoot(bool apply, bool Real)
     }
     else
     {
+        // Frost root aura -> freeze/unfreeze target
+        if (GetSpellSchoolMask(m_spellProto) & SPELL_SCHOOL_MASK_FROST)
+        {
+            bool found_another = false;
+            for(AuraType const* itr = &frozenAuraTypes[0]; *itr != SPELL_AURA_NONE; ++itr)
+            {
+                Unit::AuraList const& auras = m_target->GetAurasByType(*itr);
+                for(Unit::AuraList::const_iterator i = auras.begin(); i != auras.end(); ++i)
+                {
+                    if( GetSpellSchoolMask((*i)->GetSpellProto()) & SPELL_SCHOOL_MASK_FROST)
+                    {
+                        found_another = true;
+                        break;
+                    }
+                }
+                if(found_another)
+                    break;
+            }
+
+            if(!found_another)
+                m_target->ModifyAuraState(AURA_STATE_FROZEN, apply);
+        }
+
         // Real remove called after current aura remove from lists, check if other similar auras active
         if(m_target->HasAuraType(SPELL_AURA_MOD_ROOT))
             return;
@@ -6595,6 +6680,29 @@ void Aura::HandlePhase(bool apply, bool Real)
             m_target->SetPhaseMask(apply ? GetMiscValue() : PHASEMASK_NORMAL,false);
 
         ((Player*)m_target)->GetSession()->SendSetPhaseShift(apply ? GetMiscValue() : PHASEMASK_NORMAL);
+
+        if(GetEffIndex()==0)
+        {
+            SpellAreaForAreaMapBounds saBounds = spellmgr.GetSpellAreaForAuraMapBounds(GetId());
+            if(saBounds.first != saBounds.second)
+            {
+                uint32 zone = m_target->GetZoneId();
+                uint32 area = m_target->GetAreaId();
+
+                for(SpellAreaForAreaMap::const_iterator itr = saBounds.first; itr != saBounds.second; ++itr)
+                {
+                    // some auras remove at aura remove
+                    if(!itr->second->IsFitToRequirements((Player*)m_target,zone,area))
+                        m_target->RemoveAurasDueToSpell(itr->second->spellId);
+                    // some auras applied at aura apply
+                    else if(itr->second->autocast)
+                    {
+                        if( !m_target->HasAura(itr->second->spellId,0) )
+                            m_target->CastSpell(m_target,itr->second->spellId,true);
+                    }
+                }
+            }
+        }
     }
     else
         m_target->SetPhaseMask(apply ? GetMiscValue() : PHASEMASK_NORMAL,false);

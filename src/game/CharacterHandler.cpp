@@ -453,7 +453,7 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
         return;
     }
 
-    if(have_same_race && skipCinematics == 1 || skipCinematics == 2)
+    if ((have_same_race && skipCinematics == 1) || skipCinematics == 2)
         pNewChar->setCinematic(1);                          // not show intro
 
     // Player created, save it now
@@ -1188,7 +1188,8 @@ void WorldSession::HandleAlterAppearance( WorldPacket & recv_data )
         SendPacket(&data);
     }
 
-    _player->SetMoney(_player->GetMoney() - Cost);          // it isn't free
+    _player->ModifyMoney(-int32(Cost));                     // it isn't free
+    _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GOLD_SPENT_AT_BARBER, Cost);
 
     _player->SetByteValue(PLAYER_BYTES, 2, uint8(bs_hair->hair_id));
     _player->SetByteValue(PLAYER_BYTES, 3, uint8(Color));
@@ -1284,12 +1285,16 @@ void WorldSession::HandleCharCustomize(WorldPacket& recv_data)
         return;
     }
 
-    if(objmgr.GetPlayerGUIDByName(newname))                 // character with this name already exist
+    // character with this name already exist
+    if(uint64 newguid = objmgr.GetPlayerGUIDByName(newname))
     {
-        WorldPacket data(SMSG_CHAR_CUSTOMIZE, 1);
-        data << uint8(CHAR_CREATE_NAME_IN_USE);
-        SendPacket( &data );
-        return;
+        if(newguid != guid)
+        {
+            WorldPacket data(SMSG_CHAR_CUSTOMIZE, 1);
+            data << uint8(CHAR_CREATE_NAME_IN_USE);
+            SendPacket( &data );
+            return;
+        }
     }
 
     CharacterDatabase.escape_string(newname);

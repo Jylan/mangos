@@ -56,7 +56,9 @@
 // cdecl calling convention is only supported on intel compilers
 #  if MANGOS_ENDIAN == MANGOS_BIGENDIAN
 #    define MANGOS_IMPORT __attribute__ ((longcall))
-#  else  //MANGOS_ENDIAN != MANGOS_BIGENDIAN
+#  elif defined(__x86_64__)
+#    define MANGOS_IMPORT
+#  else
 #    define MANGOS_IMPORT __attribute__ ((cdecl))
 #  endif //MANGOS_ENDIAN
 // OS X uses .dylib as the dynamic library file name suffix

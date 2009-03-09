@@ -17,10 +17,8 @@
  */
 
 #include "Common.h"
-#include "SharedDefines.h"
 #include "Database/DatabaseEnv.h"
 #include "WorldPacket.h"
-#include "WorldSession.h"
 #include "Opcodes.h"
 #include "Log.h"
 #include "UpdateMask.h"
@@ -30,7 +28,6 @@
 #include "Player.h"
 #include "SkillExtraItems.h"
 #include "Unit.h"
-#include "CreatureAI.h"
 #include "Spell.h"
 #include "DynamicObject.h"
 #include "SpellAuras.h"
@@ -1258,7 +1255,7 @@ void Spell::EffectDummy(uint32 i)
             if (m_spellInfo->SpellFamilyFlags & 0x0000000000040000LL)
             {
                 // In 303 exist spirit depend
-                uint32 spirit = m_caster->GetStat(STAT_SPIRIT);
+                uint32 spirit = uint32(m_caster->GetStat(STAT_SPIRIT));
                 switch (m_spellInfo->Id)
                 {
                     case  1454: damage+=spirit; break;

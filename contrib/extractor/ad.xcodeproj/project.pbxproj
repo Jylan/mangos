@@ -21,12 +21,14 @@
 		7DD3A1870E980CE50023CB74 /* explode.h in Headers */ = {isa = PBXBuildFile; fileRef = 7DD3A1790E980CE50023CB74 /* explode.h */; };
 		7DD3A1880E980CE50023CB74 /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A17A0E980CE50023CB74 /* common.cpp */; };
 		7DD3A1890E980CE50023CB74 /* huffman.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A17B0E980CE50023CB74 /* huffman.cpp */; };
-		7DD3A1910E980D2D0023CB74 /* adt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A18B0E980D2D0023CB74 /* adt.cpp */; };
 		7DD3A1920E980D2D0023CB74 /* System.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A18C0E980D2D0023CB74 /* System.cpp */; };
 		7DD3A1930E980D2D0023CB74 /* mpq_libmpq.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A18D0E980D2D0023CB74 /* mpq_libmpq.cpp */; };
 		7DD3A1940E980D2D0023CB74 /* dbcfile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD3A1900E980D2D0023CB74 /* dbcfile.cpp */; };
 		7DD3A1A20E9811A00023CB74 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 7DD3A1A10E9811A00023CB74 /* libz.dylib */; };
 		7DD3A1A60E9811FA0023CB74 /* libmpq.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7DA32C690E980BC50060F599 /* libmpq.a */; };
+		7DD9CC190F6614B4004DCDA1 /* adt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD9CC120F6614B4004DCDA1 /* adt.cpp */; };
+		7DD9CC1A0F6614B4004DCDA1 /* loadlib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD9CC150F6614B4004DCDA1 /* loadlib.cpp */; };
+		7DD9CC1B0F6614B4004DCDA1 /* wdt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7DD9CC170F6614B4004DCDA1 /* wdt.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,14 +69,18 @@
 		7DD3A1790E980CE50023CB74 /* explode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = explode.h; path = libmpq/explode.h; sourceTree = "<group>"; };
 		7DD3A17A0E980CE50023CB74 /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = common.cpp; path = libmpq/common.cpp; sourceTree = "<group>"; };
 		7DD3A17B0E980CE50023CB74 /* huffman.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = huffman.cpp; path = libmpq/huffman.cpp; sourceTree = "<group>"; };
-		7DD3A18A0E980D2D0023CB74 /* adt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = adt.h; sourceTree = "<group>"; };
-		7DD3A18B0E980D2D0023CB74 /* adt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = adt.cpp; sourceTree = "<group>"; };
 		7DD3A18C0E980D2D0023CB74 /* System.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = System.cpp; sourceTree = "<group>"; };
 		7DD3A18D0E980D2D0023CB74 /* mpq_libmpq.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mpq_libmpq.cpp; sourceTree = "<group>"; };
 		7DD3A18E0E980D2D0023CB74 /* mpq_libmpq.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mpq_libmpq.h; sourceTree = "<group>"; };
 		7DD3A18F0E980D2D0023CB74 /* dbcfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dbcfile.h; sourceTree = "<group>"; };
 		7DD3A1900E980D2D0023CB74 /* dbcfile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dbcfile.cpp; sourceTree = "<group>"; };
 		7DD3A1A10E9811A00023CB74 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
+		7DD9CC120F6614B4004DCDA1 /* adt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = adt.cpp; sourceTree = "<group>"; };
+		7DD9CC130F6614B4004DCDA1 /* adt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = adt.h; sourceTree = "<group>"; };
+		7DD9CC150F6614B4004DCDA1 /* loadlib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = loadlib.cpp; sourceTree = "<group>"; };
+		7DD9CC160F6614B4004DCDA1 /* loadlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = loadlib.h; sourceTree = "<group>"; };
+		7DD9CC170F6614B4004DCDA1 /* wdt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = wdt.cpp; sourceTree = "<group>"; };
+		7DD9CC180F6614B4004DCDA1 /* wdt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wdt.h; sourceTree = "<group>"; };
 		8DD76F6C0486A84900D96B5E /* ad */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ad; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -103,6 +109,7 @@
 			children = (
 				08FB7795FE84155DC02AAC07 /* extractor */,
 				7DD3A16D0E980C960023CB74 /* libmpq */,
+				7DD9CC110F6614B4004DCDA1 /* loadlib */,
 				7DD3A19B0E9810470023CB74 /* Libraries */,
 				C6859E8C029090F304C91782 /* Documentation */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
@@ -113,8 +120,6 @@
 		08FB7795FE84155DC02AAC07 /* extractor */ = {
 			isa = PBXGroup;
 			children = (
-				7DD3A18A0E980D2D0023CB74 /* adt.h */,
-				7DD3A18B0E980D2D0023CB74 /* adt.cpp */,
 				7DD3A18C0E980D2D0023CB74 /* System.cpp */,
 				7DD3A18D0E980D2D0023CB74 /* mpq_libmpq.cpp */,
 				7DD3A18E0E980D2D0023CB74 /* mpq_libmpq.h */,
@@ -160,6 +165,19 @@
 				7DD3A1A10E9811A00023CB74 /* libz.dylib */,
 			);
 			name = Libraries;
+			sourceTree = "<group>";
+		};
+		7DD9CC110F6614B4004DCDA1 /* loadlib */ = {
+			isa = PBXGroup;
+			children = (
+				7DD9CC120F6614B4004DCDA1 /* adt.cpp */,
+				7DD9CC130F6614B4004DCDA1 /* adt.h */,
+				7DD9CC150F6614B4004DCDA1 /* loadlib.cpp */,
+				7DD9CC160F6614B4004DCDA1 /* loadlib.h */,
+				7DD9CC170F6614B4004DCDA1 /* wdt.cpp */,
+				7DD9CC180F6614B4004DCDA1 /* wdt.h */,
+			);
+			path = loadlib;
 			sourceTree = "<group>";
 		};
 		C6859E8C029090F304C91782 /* Documentation */ = {
@@ -262,10 +280,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7DD3A1910E980D2D0023CB74 /* adt.cpp in Sources */,
 				7DD3A1920E980D2D0023CB74 /* System.cpp in Sources */,
 				7DD3A1930E980D2D0023CB74 /* mpq_libmpq.cpp in Sources */,
 				7DD3A1940E980D2D0023CB74 /* dbcfile.cpp in Sources */,
+				7DD9CC190F6614B4004DCDA1 /* adt.cpp in Sources */,
+				7DD9CC1A0F6614B4004DCDA1 /* loadlib.cpp in Sources */,
+				7DD9CC1B0F6614B4004DCDA1 /* wdt.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

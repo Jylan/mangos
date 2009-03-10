@@ -51,7 +51,7 @@ bool LoadScriptingModule(char const* libName)
     if(!testScript->hScriptsLib )
     {
         // library was not found within standard dynamic loader search paths $HOME/lib; /usr/local/lib; /usr/lib
-        // try relative path instead for those who install into non-nonstandard directory
+        // try relative path instead for those who install into non-standard directory
         std::string fullPath = "@executable_path/../lib/";
         fullPath += name;
         testScript->hScriptsLib=MANGOS_LOAD_LIBRARY(fullPath.c_str());
